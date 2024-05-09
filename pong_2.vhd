@@ -16,8 +16,11 @@ ENTITY pong IS
         btn0 : IN STD_LOGIC;
         SW : IN UNSIGNED (4 DOWNTO 0);
         SEG7_anode : OUT STD_LOGIC_VECTOR (7 DOWNTO 0); -- anodes of four 7-seg displays
-        SEG7_seg : OUT STD_LOGIC_VECTOR (6 DOWNTO 0)
-        
+        SEG7_seg : OUT STD_LOGIC_VECTOR (6 DOWNTO 0);
+        dac_MCLK : OUT STD_LOGIC; -- outputs to PMODI2L DAC
+		dac_LRCK : OUT STD_LOGIC;
+		dac_SCLK : OUT STD_LOGIC;
+		dac_SDIN : OUT STD_LOGIC
     ); 
 END pong;
 
@@ -26,14 +29,20 @@ ARCHITECTURE Behavioral OF pong IS
     -- internal signals to connect modules
     SIGNAL S_red, S_green, S_blue : STD_LOGIC; --_VECTOR (3 DOWNTO 0);
     SIGNAL S_vsync : STD_LOGIC;
+    SIGNAL clk, aud_clk,sound : STD_LOGIC;
+    SIGNAL note : STD_LOGIC_VECTOR(4 DOWNTO 0);
     SIGNAL S_pixel_row, S_pixel_col : STD_LOGIC_VECTOR (10 DOWNTO 0);
     SIGNAL batpos : STD_LOGIC_VECTOR (10 DOWNTO 0); -- 9 downto 0
     SIGNAL count : STD_LOGIC_VECTOR (20 DOWNTO 0);
     SIGNAL display : std_logic_vector (15 DOWNTO 0); -- value to be displayed
     SIGNAL led_mpx : STD_LOGIC_VECTOR (2 DOWNTO 0); -- 7-seg multiplexing clock
+    SIGNAL tcount : STD_LOGIC_VECTOR (19 DOWNTO 0);
     SIGNAL cnt : std_logic_vector(20 DOWNTO 0); -- counter to generate timing signals
-    --SIGNAL xplus : SIGNED (10 DOWNTO 0) := "00000001000";
-    --SIGNAL xminus : SIGNED(10 DOWNTO 0) := "11111111000";
+    SIGNAL data_L, data_R : SIGNED (15 DOWNTO 0); -- 16-bit signed audio data
+	SIGNAL dac_load_L, dac_load_R : STD_LOGIC; -- timing pulses to load DAC shift reg.
+	SIGNAL slo_clk, sclk, audio_CLK : STD_LOGIC;
+	SIGNAL tone: Signed (15 DOWNTO 0);
+	SIGNAL clk_50mhz : std_logic;
     COMPONENT bat_n_ball IS
         PORT (
             v_sync : IN STD_LOGIC;
@@ -45,11 +54,10 @@ ARCHITECTURE Behavioral OF pong IS
             green : OUT STD_LOGIC;
             blue : OUT STD_LOGIC;
             SW : IN UNSIGNED (4 DOWNTO 0);
-            display_hits : OUT STD_LOGIC_VECTOR (15 DOWNTO 0)
-            --offset : IN SIGNED (10 DOWNTO 0)
+            display_hits : OUT STD_LOGIC_VECTOR (15 DOWNTO 0);
+            sound: OUT STD_LOGIC
         );
     END COMPONENT;
-
     COMPONENT vga_sync IS
         PORT (
             pixel_clk : IN STD_LOGIC;
@@ -71,6 +79,19 @@ ARCHITECTURE Behavioral OF pong IS
             clk_out1 : out std_logic
         );
     END COMPONENT;
+    COMPONENT CLKDiv2 IS
+		PORT (
+			inclk : IN std_logic;
+			Clk50 : OUT std_logic
+		);
+	END COMPONENT;
+    COMPONENT WaveGenerator IS
+		PORT (
+			aud_clk : IN std_logic;
+			notee : IN std_logic_vector (4 DOWNTO 0);
+			tonee : OUT signed (15 DOWNTO 0)
+		);
+    END COMPONENT;
     COMPONENT leddec16 IS
         PORT (
             dig : IN STD_LOGIC_VECTOR (2 DOWNTO 0);
@@ -79,6 +100,26 @@ ARCHITECTURE Behavioral OF pong IS
             seg : OUT STD_LOGIC_VECTOR (6 DOWNTO 0)
         );
     END COMPONENT; 
+    	COMPONENT dac_if IS
+		PORT (
+			SCLK : IN STD_LOGIC;
+			L_start : IN STD_LOGIC;
+			R_start : IN STD_LOGIC;
+			L_data : IN signed (15 DOWNTO 0);
+			R_data : IN signed (15 DOWNTO 0);
+			SDATA : OUT STD_LOGIC
+		);
+	END COMPONENT;
+    COMPONENT game_sound_effects IS
+    PORT (
+        clk : IN STD_LOGIC;  -- Main clock input
+        aud_clk : OUT STD_LOGIC;  -- Clock signal for WaveGenerator
+        note : OUT STD_LOGIC_VECTOR(4 DOWNTO 0); -- Control signal for notes
+        sound_onn:IN STD_LOGIC
+        --tone : OUT signed (15 DOWNTO 0)
+    );
+      END COMPONENT;
+    
     
 BEGIN
     pos : PROCESS (clk_in) is
@@ -90,11 +131,34 @@ BEGIN
             ELSIF (btnr = '1' and count = 0 and batpos < 800) THEN
                 batpos <= batpos + 10;
             END IF;
-        end if;
+         END IF;
     END PROCESS;
-    led_mpx <= count(19 DOWNTO 17); -- 7-seg multiplexing clock  
-      
-    add_bb1 : bat_n_ball
+    
+	tim_pr : PROCESS (clk_50MHz) is
+	BEGIN
+		if rising_edge(clk_50MHz) then
+		IF (tcount(9 DOWNTO 0) >= X"00F") AND (tcount(9 DOWNTO 0) < X"02E") THEN
+			dac_load_L <= '1';
+		ELSE
+			dac_load_L <= '0';
+		END IF;
+		IF (tcount(9 DOWNTO 0) >= X"20F") AND (tcount(9 DOWNTO 0) < X"22E") THEN
+			dac_load_R <= '1';
+		ELSE
+			dac_load_R <= '0';
+		END IF;
+		tcount <= tcount + 1;
+	end if;
+END PROCESS;
+    
+    dac_MCLK <= NOT tcount(1); -- DAC master clock (12.5 MHz)
+	audio_CLK <= tcount(9); -- audio sampling rate (48.8 kHz)
+	dac_LRCK <= audio_CLK; -- also sent to DAC as left/right clock
+	sclk <= tcount(4); -- serial data clock (1.56 MHz)
+	dac_SCLK <= sclk; -- also sent to DAC as SCLK
+	slo_clk <= tcount(19); -- clock to control wailing of tone (47.6 Hz)
+    led_mpx <= tcount(19 DOWNTO 17); -- 7-seg multiplexing clock    
+    add_bb : bat_n_ball
     PORT MAP(--instantiate bat and ball component
         v_sync => S_vsync, 
         pixel_row => S_pixel_row, 
@@ -105,11 +169,9 @@ BEGIN
         green => S_green, 
         blue => S_blue,
         SW => SW,
-        display_hits => display
-        --offset => xplus
-        
-    );
-
+        display_hits => display,
+        sound => sound
+        );
     
     vga_driver : vga_sync
     PORT MAP(--instantiate vga_sync component
@@ -132,9 +194,39 @@ BEGIN
       clk_in1 => clk_in,
       clk_out1 => pxl_clk
     );
+    clk50 : ClkDiv2
+	PORT MAP(
+		inclk => clk_in, 
+		Clk50 => clk_50mhz
+		);
     led1 : leddec16
     PORT MAP(
       dig => led_mpx, data => display, 
       anode => SEG7_anode, seg => SEG7_seg
     );
+    music : game_sound_effects
+    PORT MAP(
+        clk => clk_50mhz,
+        aud_clk => aud_clk,
+        note => note, 
+        sound_onn => sound
+        --tone => data_L
+    );
+    dac : dac_if
+		PORT MAP(
+			SCLK => sclk, -- instantiate parallel to serial DAC interface
+			L_start => dac_load_L, 
+			R_start => dac_load_R, 
+			L_data => data_L, 
+			R_data => data_R, 
+			SDATA => dac_SDIN
+		);
+		a1 : WaveGenerator
+		PORT MAP(
+			aud_clk => audio_CLK, 
+			notee => note, 
+			tonee => tone
+		);
+		data_L <= tone;
+		data_R <= tone;
 END Behavioral;
