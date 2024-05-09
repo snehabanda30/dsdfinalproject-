@@ -1,6 +1,6 @@
 # DSDFinalProject : COLLECT 
 
-# Introduction (Pre)
+# Introduction (Sneha)
 
 
 # Attachments: (Pre)
@@ -15,18 +15,19 @@
 WRITE DESCRIPITION OF PROJECT --> Any inspiration for project --> pong lab and project evade 
 PLACE PICTURE ENTITY TREE
 ## Main Modifications 
-### set of six balls
-### pixel encoding
-### ball - basket collisions
-### ball - wall collisions
-### respawn logic
-### random respawn positions
-### finite state machine
-### display hit_counter correct incrementation
+### set of six balls (Sneha)
+### pixel encoding (Sneha)
+### ball - basket collisions (Pre)
+### ball - wall collisions (Sneha)
+### respawn logic (Pre)
+### random respawn positions (Pre)
+### finite state machine (Pre)
+### display hit_counter correct incrementation (Sneha)
+### Music (Naz)
 
 # Process Summary (Sneha)
 
-# Important Port Maps 
+# Important Port Maps (Pre)
 ### Description of inputs from and outputs to the Nexys board from the Vivado project (10 points of the Submission category)
   * As part of this category, if using starter code of some kind (discussed below), you should add at least one input and at least one output appropriate to your project to demonstrate your understanding of modifying the ports of your various architectures and components in VHDL as well as the separate .xdc constraints file.
 
