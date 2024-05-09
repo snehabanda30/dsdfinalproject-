@@ -16,7 +16,10 @@ WRITE DESCRIPITION OF PROJECT --> Any inspiration for project --> pong lab and p
 PLACE PICTURE ENTITY TREE
 ## Main Modifications 
 ### set of six balls (Sneha)
-### pixel encoding (Sneha)
+*
+### Pixel encoding (Sneha)
+
+### Drawing (Sneha)
 ### ball - basket collisions (Pre)
 ### ball - wall collisions (Sneha)
 ### respawn logic (Pre)
