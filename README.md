@@ -263,7 +263,83 @@ IF nx_state = ENTER_GAME THEN
                     collision_detected <= FALSE;
                 END IF;
 ```
-### Music (Naz)
+### Sound Effects (Naz)
+* The music was intended to operate similar to a MIDI player, drawing inspiration from the project [Tetris_Music](https://digilent.com/shop/nexys-a7-fpga-trainer-board-recommended-for-ece-curriculum/). This project utilized fixed notes and square waves, aligning with a similar logical framework.
+* To create the sound effects for the game an online midi sequencer was utilized. This is the simple sound effect that the team decided on when the player start and ends the game: [Collect_Music](https://onlinesequencer.net/3988488).
+* First File that was added to achieve that sound was ```game_sound_effects.vhd```.
+* The code dynamically changes the note output signal to produce different notes when the sound is enabled, following a predefined duration for each note when the **sound_onn** is '1' as shown below:
+```vhdl
+ SIGNAL NOTE_DURATION : INTEGER := 4880000;  -- Duration for each note
+    SIGNAL note_counter : INTEGER := 0;
+BEGIN
+    sound_effects : PROCESS (clk) 
+    BEGIN
+        IF rising_edge(clk) THEN
+           if sound_onn <= '1'THEN 
+                note_counter <= note_counter + 1;
+                --nx_state <= pr_state;
+                    IF note_counter < NOTE_DURATION THEN
+                        note <= "01111";
+                    Elsif note_counter >NOTE_DURATION AND note_counter < NOTE_DURATION *2 THEN
+                        note <= "01000";
+                  --...
+```
+* The code outputs the played notes and the aud_clk signal to the ```WaveGenerator.vhd``` file. This helps with processing, as that file functions as a clock divider, generating square waves that are subsequently transformed into audio signals.
+```vhdl
+square : PROCESS (aud_clk, tmp_clk, notee) 
+		VARIABLE div_cnt : INTEGER := 0;
+		VARIABLE max_count : INTEGER := 0;
+	BEGIN
+		CASE notee IS --When the clock speed is 48800hz
+			WHEN "00000" => max_count := 0; --empty note
+			WHEN "01111" => max_count := 52; --A#5 52
+			WHEN "01000" => max_count := 55; --A5 55
+			WHEN "00111" => max_count := 62; --G#5 62
+			WHEN "01001" => max_count := 65; --G5 70
+			WHEN OTHERS => 
+		END CASE;
+		IF (rising_edge(aud_clk)) THEN
+			IF (div_cnt >= max_count) THEN
+				tmp_clk <= NOT tmp_clk;
+				div_cnt := 0;
+			ELSE
+				div_cnt := div_cnt + 2;
+			END IF;
+		END IF;
+
+		IF (notee = "00000") THEN
+			tonee <= "0000000000000000";
+		ELSE
+			CASE tmp_clk IS
+				WHEN '0' => tonee <= TO_SIGNED(10240, 16);
+				WHEN '1' => tonee <= TO_SIGNED( - 10240, 16);
+			END CASE;
+		END IF;
+```
+* The code:
+  * Compares the 5-bit input to a 32-entry lookup table associating each bit combination with a note
+  * Utilizes calculated values for each note in a clock divider.
+  * Divides the input 48.8KHz clock by the corresponding table value.
+  * Generates a temporary clock with the desired frequency.
+  * Outputs a 16-bit signed value (either 10240 or -10240) based on the state of the new clock signal.
+* The team specifically included only the four mentioned notes. 
+* **tonee** epresents the resulting audio data output.
+* Also ```ClkDiv2.vhd``` was incorporated to halve the 100 MHz system clock to 50 MHz. This was done to align with the lab 5 inspired sections of the code, which specifically required a 50 MHz clock.
+```vhdl
+BEGIN
+	PROCESS (inclk)
+	BEGIN
+		IF rising_edge(inclk) THEN
+			IF (counter >= count) THEN
+				counter <= 0;
+				clk_reg <= NOT(clk_reg);
+			ELSE
+				counter <= counter + 1;
+			END IF;
+		END IF;
+	END PROCESS;
+	Clk50 <= clk_reg;
+```
 
 ## Process Summary (Sneha)
 
