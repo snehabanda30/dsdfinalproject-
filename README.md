@@ -1,6 +1,13 @@
 # DSDFinalProject : COLLECT 
 
 # Introduction (Sneha)
+In **COLLECT**, player must collect 5 circles and avoid squares. 
+
+**GOAL**: Player should collect circles, while red squares are also falling down.  
+
+**Score**: Displays score on the board. 
+          **Increments** when a green ball hits bat
+           **Decrements** when a red square hits bat  
 
 
 # Attachments:
@@ -18,11 +25,60 @@
 WRITE DESCRIPITION OF PROJECT --> Any inspiration for project --> pong lab and project evade 
 PLACE PICTURE ENTITY TREE
 ## Main Modifications 
-### set of six balls (Sneha)
-*
-### Pixel encoding (Sneha)
+### Set of Six Balls (Sneha)
+* Six balls were initialized with different X coordinates and a Y coordinate set to zero to display the balls at various positions across the top of the screen.
+* A new variable called 'ball_on_screen' was created as a std_logic_vector(5 downto 0) to manage the visibility of the six balls on the screen.
+* For the balls to move vertically (in the y direction), all ball_x_motion values are set to zero, while ball_y_motion is determined by the specified ball_speed.
 
-### Drawing (Sneha)
+```vhdl
+    SIGNAL start_pos : STD_LOGIC_VECTOR(10 downto 0);
+    SIGNAL ball_x0 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(100, 11);
+    SIGNAL ball_x1 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(350, 11);
+    SIGNAL ball_x2 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(450, 11);
+    SIGNAL ball_x3 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(550, 11);
+    SIGNAL ball_x4 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(650, 11);
+    SIGNAL ball_x5 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(750, 11);
+    SIGNAL ball_y0, ball_y1, ball_y2,ball_y3,ball_y4,ball_y5 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(0, 11);
+    -- bat vertical position
+    CONSTANT bat_y : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(500, 11);
+    -- current ball motion - initialized to (+ ball_speed) pixels/frame in both X and Y directions
+    SIGNAL ball_x_motion0, ball_x_motion1, ball_x_motion2,ball_x_motion3,ball_x_motion4,ball_x_motion5 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(0,11);
+    SIGNAL ball_y_motion0, ball_y_motion1, ball_y_motion2,ball_y_motion3,ball_y_motion4,ball_y_motion5 : STD_LOGIC_VECTOR(10 DOWNTO 0) := ball_speed;
+    SIGNAL ball_on_screen : std_logic_vector(5 DOWNTO 0) := (OTHERS => '0')
+```
+### Pixel encoding (Sneha)
+* Determines the colors of the balls and squares
+* The ball_on(0), ball_on(2),ball_on(6) or ball_on(8) are green circles. ball_on(1), ball_on(3),ball_on(4),ball_on(5) and ball_on(7) are red
+```vhdl
+    red <=NOT (ball_on(0) or ball_on(2) or ball_on(6) or ball_on(8));  -- color setup
+    green <= NOT (ball_on(1) or ball_on(3) or ball_on(4) or ball_on(5) or ball_on(7));
+    blue <= NOT (bat_on or ball_on(1)OR ball_on(0)or ball_on(2)or ball_on(3)or ball_on(4)or   ball_on(5) or ball_on(6) or ball_on(7) or ball_on(8));
+    
+```
+### Drawing Circles and Squares (Sneha)
+* The group used the circle equation multiple times to draw each ball. The If/Else statement is used to turn the pixels on and off based on circle equation.
+```
+IF ball_on_screen(0) = '1' THEN 
+        IF ((CONV_INTEGER(pixel_col) - CONV_INTEGER(ball_x0))**2 + (CONV_INTEGER(pixel_row) - CONV_INTEGER(ball_y0))**2) <= (bsize*bsize) THEN
+                ball_on(0) <= '1';
+            ELSE
+                ball_on(0) <= '0';
+        END IF;
+    END IF;
+```
+* The group used the square equation multiple times to draw each square. The If/Else statement is used to turn the pixels on and off to create a square.
+```
+IF ball_on_screen(1) = '1' THEN 
+            IF pixel_col >= ball_x1 - bsize AND
+            pixel_col <= ball_x1 + bsize AND
+                pixel_row >= ball_y1 - bsize AND
+                pixel_row <= ball_y1 + bsize THEN
+                   ball_on(1) <= '1';
+            ELSE
+                ball_on(1) <= '0';
+            END IF;
+        END IF;
+```
 ### ball - basket collisions
 * Original Code
 ```vhdl
@@ -52,7 +108,19 @@ WHEN START_COLL =>
 * Once the ball collides with the bat, which is based on the provided conditions, ```ball_on_screen(i) <= '0'```, which allows the pixels to turn off.
 * ```game_on(i) <= '0'```, resulting in the motion of the ball to cease.
 * ```ps_state <= pr_state``` which is important for the ability of the balls to respawn.
-### ball - wall collisions (Sneha)
+### ball - wall collisions (Sneha) 
+* Once the ball reaches the bottom of screen (at 600 pixels), the ball wall will disappear
+  *   The equation adds the current ball position and the radius of the ball.
+  *   The ball_on_screen signal will be set to zero.
+  *   The game_on(0) signal is set to '0'.
+  **   The state returns to Enter_Game.
+```
+ELSIF ball_y0 + bsize >= 600 THEN -- if ball meets bottom wall
+                           ball_on_screen(0) <= '0';
+                           game_on(0) <= '0';
+                           ps_state <= pr_state;
+                           nx_state <= ENTER_GAME; 
+```
 ### motion
 ### respawn logic
 * Original Code
@@ -159,7 +227,45 @@ WHEN END_GAME =>
   * SERVE_RELEASE: initializes hit counter and turns game and balls on
   * START_COLL: Checks for collisions and distributes points accordingly
   * END__GAME: game ends end and balls would stop respawning if the player reaches either 0 or 5 points. 
-### display hit_counter correct incrementation (Sneha)
+### Hit_counter incrementation (Sneha)
+* Counter will **increase**  when a green ball hits and **decrease** when red square hits the bat.
+     * Checks to see if **hit_counter <= "0000000000000000"**  to see whether the state will 
+     change to END_GAME 
+     * If the **collision_detected** is true, then **hit_counter <= hit_counter - / + 
+      "0000000000000001";**.
+```
+ IF (ball_x1 + bsize/2) >= (bat_x - bat_w) AND
+                   (ball_x1 - bsize/2) <= (bat_x + bat_w) AND
+                   (ball_y1 + bsize/2) >= (bat_y - bat_h) AND
+                   (ball_y1 - bsize/2) <= (bat_y + bat_h) THEN
+                           ball_on_screen(1) <= '0';
+                           game_on(1) <= '0';
+                           If hit_counter <= "0000000000000000" THEN
+                                ps_state <= pr_state;
+                                nx_state <= END_GAME;
+                           ELSE
+                                ps_state <= pr_state;
+                                nx_state <= ENTER_GAME;
+                           end if; 
+                           if not collision_detected then
+                           hit_counter <= hit_counter - "0000000000000001";
+                           end if;
+                           display_hits <= hit_counter;
+                           collision_detected <= TRUE;          
+                ELSIF ball_y1 + bsize >= 600 THEN -- if ball meets bottom wall
+                           ball_on_screen(1) <= '0';
+                           game_on(1) <= '0';
+                           ps_state <= pr_state;
+                           nx_state <= ENTER_GAME;       
+                END IF;
+
+```
+* If the next tate becomes ENTER_GAME, then the collision_detected resets to False.   
+```
+IF nx_state = ENTER_GAME THEN
+                    collision_detected <= FALSE;
+                END IF;
+```
 ### Music (Naz)
 
 # Process Summary (Sneha)
