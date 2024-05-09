@@ -1,7 +1,7 @@
 # DSDFinalProject : COLLECT 
 
-# Introduction (Sneha)
-In **COLLECT**, player must collect 5 circles and avoid squares. 
+## Introduction
+In **COLLECT**, player must get five points by collecting green circles and avoiding red squares.  
 
 **GOAL**: Player should collect circles, while red squares are also falling down.  
 
@@ -10,7 +10,7 @@ In **COLLECT**, player must collect 5 circles and avoid squares.
            **Decrements** when a red square hits bat  
 
 
-# Attachments:
+## Attachments:
 [NI Digilent Nexys A7-100T FPGA Trainer Board](https://digilent.com/shop/nexys-a7-fpga-trainer-board-recommended-for-ece-curriculum/)
 
 
