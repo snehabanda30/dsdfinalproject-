@@ -24,6 +24,7 @@ PLACE PICTURE ENTITY TREE
 ### finite state machine (Pre)
 ### display hit_counter correct incrementation (Sneha)
 ### Music (Naz)
+### Score (Naz)
 
 # Process Summary (Sneha)
 
