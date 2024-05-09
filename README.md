@@ -26,7 +26,7 @@ PLACE PICTURE ENTITY TREE
 * A new variable called 'ball_on_screen' was created as a std_logic_vector(5 downto 0) to manage the visibility of the six balls on the screen.
 * For the balls to move vertically (in the y direction), all ball_x_motion values are set to zero, while ball_y_motion is determined by the specified ball_speed.
 
-```
+```vhdl
     SIGNAL start_pos : STD_LOGIC_VECTOR(10 downto 0);
     SIGNAL ball_x0 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(100, 11);
     SIGNAL ball_x1 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(350, 11);
