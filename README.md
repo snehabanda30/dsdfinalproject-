@@ -57,7 +57,7 @@ PLACE PICTURE ENTITY TREE
 ```
 ### Drawing Circles and Squares (Sneha)
 * The group used the circle equation multiple times to draw each ball. The If/Else statement is used to turn the pixels on and off based on circle equation.
-```
+```vhdl
 IF ball_on_screen(0) = '1' THEN 
         IF ((CONV_INTEGER(pixel_col) - CONV_INTEGER(ball_x0))**2 + (CONV_INTEGER(pixel_row) - CONV_INTEGER(ball_y0))**2) <= (bsize*bsize) THEN
                 ball_on(0) <= '1';
@@ -67,7 +67,7 @@ IF ball_on_screen(0) = '1' THEN
     END IF;
 ```
 * The group used the square equation multiple times to draw each square. The If/Else statement is used to turn the pixels on and off to create a square.
-```
+```vhdl
 IF ball_on_screen(1) = '1' THEN 
             IF pixel_col >= ball_x1 - bsize AND
             pixel_col <= ball_x1 + bsize AND
@@ -114,7 +114,7 @@ WHEN START_COLL =>
   *   The ball_on_screen signal will be set to zero.
   *   The game_on(0) signal is set to '0'.
   **   The state returns to Enter_Game.
-```
+```vhdl
 ELSIF ball_y0 + bsize >= 600 THEN -- if ball meets bottom wall
                            ball_on_screen(0) <= '0';
                            game_on(0) <= '0';
@@ -233,7 +233,7 @@ WHEN END_GAME =>
      change to END_GAME 
      * If the **collision_detected** is true, then **hit_counter <= hit_counter - / + 
       "0000000000000001";**.
-```
+```vhdl
  IF (ball_x1 + bsize/2) >= (bat_x - bat_w) AND
                    (ball_x1 - bsize/2) <= (bat_x + bat_w) AND
                    (ball_y1 + bsize/2) >= (bat_y - bat_h) AND
