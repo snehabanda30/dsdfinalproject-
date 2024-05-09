@@ -13,21 +13,18 @@ In **COLLECT**, player must get five points by collecting green circles and avoi
 ## Attachments:
 [NI Digilent Nexys A7-100T FPGA Trainer Board](https://digilent.com/shop/nexys-a7-fpga-trainer-board-recommended-for-ece-curriculum/)
 
+![NI Digilent Nexys A7-100T FPGA Trainer Board](NexysA7-obl-600__85101.jpg)
 
-### A description of the expected behavior of the project, attachments needed (speaker module, VGA connector, etc.), related images/diagrams, etc. (10 points of the Submission category)
-* The more detailed the better – you all know how much I love a good finite state machine and Boolean logic, so those could be some good ideas if appropriate for your system. If not, some kind of high level block diagram showing how different parts of your program connect together and/or showing how what you have created might fit into a more complete system could be appropriate instead.
+## Video (Sneha)
 
-# Video (Sneha)
+## Steps to Run Project (Sneha)
 
-# Steps to Run Project (Sneha)
-
-# Modifications 
+## Modifications 
 WRITE DESCRIPITION OF PROJECT --> Any inspiration for project --> pong lab and project evade 
 PLACE PICTURE ENTITY TREE
-## Main Modifications 
-### Set of Six Balls (Sneha)
-* Six balls were initialized with different X coordinates and a Y coordinate set to zero to display the balls at various positions across the top of the screen.
-* A new variable called 'ball_on_screen' was created as a std_logic_vector(5 downto 0) to manage the visibility of the six balls on the screen.
+### Set of nine balls
+* Nine balls were initialized with different X coordinates and a Y coordinate set to zero to display the balls at various positions across the top of the screen.
+* A new variable called 'ball_on_screen' was created as a std_logic_vector(8 downto 0) to manage the visibility of the nine balls on the screen.
 * For the balls to move vertically (in the y direction), all ball_x_motion values are set to zero, while ball_y_motion is determined by the specified ball_speed.
 
 ```vhdl
@@ -46,7 +43,7 @@ PLACE PICTURE ENTITY TREE
     SIGNAL ball_y_motion0, ball_y_motion1, ball_y_motion2,ball_y_motion3,ball_y_motion4,ball_y_motion5 : STD_LOGIC_VECTOR(10 DOWNTO 0) := ball_speed;
     SIGNAL ball_on_screen : std_logic_vector(5 DOWNTO 0) := (OTHERS => '0')
 ```
-### Pixel encoding (Sneha)
+### Pixel Encoding 
 * Determines the colors of the balls and squares
 * The ball_on(0), ball_on(2),ball_on(6) or ball_on(8) are green circles. ball_on(1), ball_on(3),ball_on(4),ball_on(5) and ball_on(7) are red
 ```vhdl
@@ -79,7 +76,7 @@ IF ball_on_screen(1) = '1' THEN
             END IF;
         END IF;
 ```
-### ball - basket collisions
+### Ball-Basket Collisions
 * Original Code
 ```vhdl
  -- allow for bounce off bat
@@ -108,7 +105,7 @@ WHEN START_COLL =>
 * Once the ball collides with the bat, which is based on the provided conditions, ```ball_on_screen(i) <= '0'```, which allows the pixels to turn off.
 * ```game_on(i) <= '0'```, resulting in the motion of the ball to cease.
 * ```ps_state <= pr_state``` which is important for the ability of the balls to respawn.
-### ball - wall collisions (Sneha) 
+### Ball-Wall Collisions 
 * Once the ball reaches the bottom of screen (at 600 pixels), the ball wall will disappear
   *   The equation adds the current ball position and the radius of the ball.
   *   The ball_on_screen signal will be set to zero.
@@ -121,8 +118,8 @@ ELSIF ball_y0 + bsize >= 600 THEN -- if ball meets bottom wall
                            ps_state <= pr_state;
                            nx_state <= ENTER_GAME; 
 ```
-### motion
-### respawn logic
+### Motion (Sneha)
+### Respawn Logic
 * Original Code
 ```vhdl
 WAIT UNTIL rising_edge(v_sync);
@@ -173,7 +170,7 @@ temp := ('0' & ball_y0) + (ball_y_motion0(10) & ball_y_motion0);
 * This code also utilizes the temp variable to reset the x and y position.
 * The group's altered code utilizes the temp variable to reset the balls' positions, randomly selecting x positions based on a unique factor for each temp variable, when ```game_on(i) = '0'```, which occurs after a collision.
 * However, they also set the next state to ```ENTER_GAME``` once a collison occurs, and it is in this state that ball's pixels turn on and the motion is reset.
-### random respawn positions
+### Respawning in Random x-Positions.
 ```vhdl
 randomizer: PROCESS IS
      VARIABLE rand : INTEGER;        
@@ -185,7 +182,7 @@ randomizer: PROCESS IS
 * The group utilized code from the [Evade Game -- Final Project Work for Digital System Design](https://github.com/Aoli03/DSD-Final-Lab-Project/tree/main?tab=readme-ov-file) in order to set random x positions for the balls before they respawned.
 * Assigned on the falling edge of every clock cycle.
 * Mod division 700 prevents the balls from spawning off screen.
-### finite state machine (Pre)
+### Finite State Machine 
 * Original Code
 ```vhdl
 mball : PROCESS
@@ -227,7 +224,7 @@ WHEN END_GAME =>
   * SERVE_RELEASE: initializes hit counter and turns game and balls on
   * START_COLL: Checks for collisions and distributes points accordingly
   * END__GAME: game ends end and balls would stop respawning if the player reaches either 0 or 5 points. 
-### Hit_counter incrementation (Sneha)
+### Corrected Hit_Counter Incrementation
 * Counter will **increase**  when a green ball hits and **decrease** when red square hits the bat.
      * Checks to see if **hit_counter <= "0000000000000000"**  to see whether the state will 
      change to END_GAME 
@@ -268,19 +265,15 @@ IF nx_state = ENTER_GAME THEN
 ```
 ### Music (Naz)
 
-# Process Summary (Sneha)
+## Process Summary (Sneha)
 
-# Important Ports and Signals (Pre)
+## Important Ports and Signals (Pre)
 * ```ball_on_screen(8 downto 0)```, ```ball_on(8 downto 0)```, ```game_on(8 downto 0)```: controls individual balls' pixels, drawing, and motions
 * ```collision_detected```: boolean signal that toggles "true" when a collision occurs, flag that prevents hit_counter from incrementing more than once after a collision occurs.
 * ```pr_state```,```nx_state```: signals that are assigned states after every clock cycle.
 * ```display_hits```, ```hit_counter```: the port that communicates with leddec regarding the number of points a player has received, corresponding signal that counts hits based on the occurence of collisions between the balls and bat
 
-### Description of inputs from and outputs to the Nexys board from the Vivado project (10 points of the Submission category)
-  * As part of this category, if using starter code of some kind (discussed below), you should add at least one input and at least one output appropriate to your project to demonstrate your understa
-nding of modifying the ports of your various architectures and components in VHDL as well as the separate .xdc constraints file.
-
-# Contributions 
-
-
-
+## Contributions 
+* Sneha was responsible for the creation of multiple balls and aided with the drawing and respawn logic.
+* Nazanin was responsible for the music, debugged the hit_counter signal so that it would increment correctly within the FSM, and implemented drawing logic for the balls.
+* Prerana worked on the conception of the newly implemented motion logic FSM and contributed to the development of the respawn logic.
