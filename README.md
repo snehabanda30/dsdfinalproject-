@@ -304,7 +304,7 @@ BEGIN
 	Clk50 <= clk_reg;
 ```
 ### Modifications for Sound Effect Logic
-* The modifications to the top-level module ```pong.vhd``` were inspired by ```siren.vhd``` from lab 5. This module preserves the timing and logic required for DAC operation. However, it incorporates additional logic and code for music generation and signal combination, similar to how data from the ```wail.vhd``` instance is sent to the DAC.
+* The modifications to the top-level module ```pong.vhd``` were inspired by ```siren.vhd``` from lab 5. This module preserves the timing and logic required for DAC operation. However, it incorporates additional logic and code for music generation and signal combination, similar to how data from the ```wail.vhd``` is sent to the DAC.
 ```vhdl
 ENTITY pong IS
     PORT (
@@ -423,7 +423,7 @@ END PROCESS;
 		data_R <= tone;
 ```
 * The majority of modifications, distinct from those in lab 5, primarily involve the routing of input and output variables.
-* A std_logic signal named 'sound' was incorporated into the ``bat_n_ball.vhd``` file. This signal is set to '1' when the game is turning on or ending.
+* A std_logic signal named 'sound' was incorporated into the ```bat_n_ball.vhd``` file. This signal is set to '1' when the game is turning on or ending.
 ```vhd
 WHEN END_GAME =>
                 ball_on_screen <= "000000000";
@@ -707,7 +707,7 @@ BEGIN
                 END IF;
 ```
 * However, despite implementing the flag from lab 6, they found that it did not resolve the issues, and they continued to encounter the same problems.
-* After further investigation, they realized that they had been using the flag incorrectly and that it wasn't having any effect. Consequently, they modified the code accordingly, and eventually, they succeeded in getting the counter to count correctly.
+* After further investigation, they realized that they had been using the flag incorrectly and that it wasn't having any effect. Consequently, they modified the code accordingly, and they succeeded in getting the counter to count correctly.
 #### Sound Effects
 * Although the sound effects played correctly at the beginning of the game, numerous challenges arose in getting the code to produce the appropriate sound effects for the game's ending (whether winning or losing).
  *  Instead, a very delayed humming sound would play, and it prevented the correct sound effect from playing when restarting the game
