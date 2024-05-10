@@ -9,6 +9,9 @@ In **COLLECT**, player must get five points by collecting green circles and avoi
           **Increments** when a green ball hits bat
            **Decrements** when a red square hits bat  
 
+# Expected Behavior 
+
+COLLECT was developed from the lab 6 baseline code. Once the game appears on the monitor, a starting audio will play. The player will press on BTNC to make 5 squares and 4 circles appear with different speeds and locations. The player will need to use the BTNR and BTNL button to move the bat across the screen to catch the green circle. If the player catches the green circle, then the score increments by one. If the player mistakenly catches the red square, then the score will decrement by one. Once the player gets five points, the player has won the game and can restart the game. However, when the game is in play and score reaches zero, the player has lost the game and must restart.  
 
 ## Attachments:
 [NI Digilent Nexys A7-100T FPGA Trainer Board](https://digilent.com/shop/nexys-a7-fpga-trainer-board-recommended-for-ece-curriculum/)
@@ -18,13 +21,21 @@ In **COLLECT**, player must get five points by collecting green circles and avoi
 [Pmod I2S](https://digilent.com/reference/pmod/pmodi2s/start?redirect=1)
 
 ![Pmod I2S](i2s.png)
-
 ## Video (Sneha)
+![image](screen.gif) 
 
+![image](winningandlosingonboard.gif)
 ## Steps to Run Project (Sneha)
+1. Download files: clk_wiz_0, clk_wiz_0_clk_wiz, vga_sync, bat_n_ball, leddec16,pong and opng_2.xdc  
+2. Connect the monitor's HDMI cable to VGA. Also, connect the VGA to Nexys A7-100T board by powering with a USB cable and connecting aux cord to board.  
+3. Connect the board via a PROG UART to computer to upload code. 
+4. Run Synthesis 
+5. Run Implementation
+6. Generate bitstream, open hardware manager, and program device
+7. Press down BTNC to begin game
+   * Use the BTNL and BTNR to move the bat across the screen
 
 ## Modifications 
-WRITE DESCRIPITION OF PROJECT --> Any inspiration for project --> pong lab and project evade 
 PLACE PICTURE ENTITY TREE
 
 ### Finite State Machine 
