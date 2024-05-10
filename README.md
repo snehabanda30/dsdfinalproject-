@@ -1,4 +1,4 @@
-# DSDFinalProject : COLLECT 
+# DSD Final Project : COLLECT 
 
 ## Introduction
 In **COLLECT**, player must get five points by collecting green circles and avoiding red squares.  
@@ -21,7 +21,7 @@ COLLECT was developed from the lab 6 baseline code. Once the game appears on the
 [Pmod I2S](https://digilent.com/reference/pmod/pmodi2s/start?redirect=1)
 
 ![Pmod I2S](i2s.png)
-## Video (Sneha)
+## Video
 ![image](screen.gif) 
 
 ![image](winningandlosingonboard.gif)
@@ -30,7 +30,7 @@ COLLECT was developed from the lab 6 baseline code. Once the game appears on the
 
 [Audio for Music](https://www.youtube.com/shorts/x4X-i4yPIbg)
 
-## Steps to Run Project (Sneha)
+## Steps to Run Project
 1. Download files: clk_wiz_0, clk_wiz_0_clk_wiz, vga_sync, bat_n_ball, leddec16,pong and pong_2.xdc  
 2. Connect the monitor's HDMI cable to VGA. Also, connect the VGA to Nexys A7-100T board by powering with a USB cable and connecting aux cord to board.  
 3. Connect the board via a PROG UART to computer to upload code. 
@@ -210,47 +210,23 @@ randomizer: PROCESS IS
    ```
 * This logic dictates that if the sum of the y coordinate and the radius of the ball is greater than the screen height, the signals controlling the movement and appearance of the ball will become 0, and the next state will be **ENTER_GAME**.
  
-### Corrected Hit_Counter Incrementation
-* The group wanted the signal ```hit_counter``` to increment and decrement upon 
-* Counter will **increase**  when a green ball hits and **decrease** when red square hits the bat.
-     * Checks to see if **hit_counter <= "0000000000000000"**  to see whether the state will 
-     change to END_GAME 
-     * If the **collision_detected** is true, then **hit_counter <= hit_counter - / + 
-      "0000000000000001";**.
-```vhdl
- IF (ball_x1 + bsize/2) >= (bat_x - bat_w) AND
-                   (ball_x1 - bsize/2) <= (bat_x + bat_w) AND
-                   (ball_y1 + bsize/2) >= (bat_y - bat_h) AND
-                   (ball_y1 - bsize/2) <= (bat_y + bat_h) THEN
-                           ball_on_screen(1) <= '0';
-                           game_on(1) <= '0';
-                           If hit_counter <= "0000000000000000" THEN
-                                ps_state <= pr_state;
-                                nx_state <= END_GAME;
-                           ELSE
-                                ps_state <= pr_state;
-                                nx_state <= ENTER_GAME;
-                           end if; 
-                           if not collision_detected then
-                           hit_counter <= hit_counter - "0000000000000001";
-                           end if;
-                           display_hits <= hit_counter;
-                           collision_detected <= TRUE;          
-                ELSIF ball_y1 + bsize >= 600 THEN -- if ball meets bottom wall
-                           ball_on_screen(1) <= '0';
-                           game_on(1) <= '0';
-                           ps_state <= pr_state;
-                           nx_state <= ENTER_GAME;       
-                END IF;
-
+### Hit_Counter Incrementation
+* The group wanted the signal ```hit_counter``` to increment and decrement upon the collision between ball and basket.
+*  The group implemented a boolean flag ```collision_detected```, which would become true immediately after a ball-basket collision, and false otherwise
+```vhdl 
+	if not collision_detected then
+		hit_counter <= hit_counter - "0000000000000001";
+	end if;
+		display_hits <= hit_counter;
+		collision_detected <= TRUE;          
 ```
 * If the next state becomes ENTER_GAME, then the collision_detected resets to False.   
 ```
 IF nx_state = ENTER_GAME THEN
                     collision_detected <= FALSE;
-                END IF;
+END IF;
 ```
-### Sound Effects (Naz)
+### Sound Effects 
 * The music was intended to operate similar to a MIDI player, drawing inspiration from the project [Tetris_Music](https://digilent.com/shop/nexys-a7-fpga-trainer-board-recommended-for-ece-curriculum/). This project utilized fixed notes and square waves, aligning with a similar logical framework.
 * To create the sound effects for the game an online midi sequencer was utilized. This is the simple sound effect that the team decided on when the player start and ends the game: [Collect_Music](https://onlinesequencer.net/3988488).
 * First File that was added to achieve that sound was ```game_sound_effects.vhd```.
@@ -464,12 +440,14 @@ WHEN END_GAME =>
   
 ## Process Summary  
 ![image](diagram.jpg)
-### Challenges 
+### Challenges
+### Compponent Discrepancies
+** The team originally attempted to add multiple components of the ```bat_n_ball``` file in order to create several balls. However, this approach resulted in errors with multiple ports writing to another input port at once. In order to combat this, the team implemented the vector approach detailed in the modifications section. 
 #### Respawn
 * Although the team eventually succeeded in getting the balls to respawn correctly, initially, they encountered significant difficulty in achieving this.
 * They made multiple attempts and tried various codes before achieving success.
 * One of the respawn attempts involved the following code:
-```vhd
+```vhdl
 WHEN START_COLL =>
             --collision cases
                 IF (ball_x0 + bsize/2) >= (bat_x - bat_w) AND
@@ -512,10 +490,10 @@ WHEN START_COLL =>
                 END IF;    
             END CASE;
 ```
-* this approach did not yield the desired outcome. Instead, it caused the ball to spawn randomly while descending, leading to erratic movements on the screen, contrary to the team's intentions.
+* This approach did not yield the desired outcome. Instead, it caused the ball to spawn randomly while descending, leading to erratic movements on the screen, contrary to the team's intentions.
 * Despite trying multiple other approaches, they encountered similar issues with the ball spawning randomly or unexpectedly disappearing during gameplay. These repeated failures indicated that they were approaching the problem incorrectly.
-* In their attempt to rectify the issue, the team inadvertently worsened the situation, resulting in the balls no longer disappearing after collisions using the code below:
-```vhd
+* In their next iteration, balls would not disappear after collisions:
+```vhdl
 WHEN START_COLL =>
             --collision cases
                 IF (ball_x0 + bsize/2) >= (bat_x - bat_w) AND
