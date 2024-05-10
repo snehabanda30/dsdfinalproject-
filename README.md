@@ -31,7 +31,7 @@ COLLECT was developed from the lab 6 baseline code. Once the game appears on the
 [Audio for Music](https://www.youtube.com/shorts/x4X-i4yPIbg)
 
 ## Steps to Run Project (Sneha)
-1. Download files: clk_wiz_0, clk_wiz_0_clk_wiz, vga_sync, bat_n_ball, leddec16,pong and opng_2.xdc  
+1. Download files: clk_wiz_0, clk_wiz_0_clk_wiz, vga_sync, bat_n_ball, leddec16,pong and pong_2.xdc  
 2. Connect the monitor's HDMI cable to VGA. Also, connect the VGA to Nexys A7-100T board by powering with a USB cable and connecting aux cord to board.  
 3. Connect the board via a PROG UART to computer to upload code. 
 4. Run Synthesis 
@@ -43,29 +43,25 @@ COLLECT was developed from the lab 6 baseline code. Once the game appears on the
 ## Modifications 
 PLACE PICTURE ENTITY TREE
 
-### Set of nine balls
+### Set of Nine Balls
 * In the original Pong lab, ```ball_on``` and ```game_on``` were signals responsible for the drawing and positioning of one ball in the bat_n_ball component file.
-* For the group's purposes, they required several balls to be created, and spawn randomly and independently based on any collision they had. 
-* In order to do this, the group changed ```ball_on``` and ```game_on``` to vectors with lengths of 9 bits, each of those bits corresponding to x and y coordinate signals that the group 
-* A new variable called 'ball_on_screen' was created as a std_logic_vector(8 downto 0) to manage the visibility of the nine balls on the screen.
-* For the balls to move vertically (in the y direction), all ball_x_motion values are set to zero, while ball_y_motion is determined by the specified ball_speed.
-
-```vhdl
-    SIGNAL start_pos : STD_LOGIC_VECTOR(10 downto 0);
-    SIGNAL ball_x0 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(100, 11);
-    SIGNAL ball_x1 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(350, 11);
-    SIGNAL ball_x2 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(450, 11);
-    SIGNAL ball_x3 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(550, 11);
-    SIGNAL ball_x4 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(650, 11);
-    SIGNAL ball_x5 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(750, 11);
-    SIGNAL ball_y0, ball_y1, ball_y2,ball_y3,ball_y4,ball_y5 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(0, 11);
-    -- bat vertical position
-    CONSTANT bat_y : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(500, 11);
-    -- current ball motion - initialized to (+ ball_speed) pixels/frame in both X and Y directions
-    SIGNAL ball_x_motion0, ball_x_motion1, ball_x_motion2,ball_x_motion3,ball_x_motion4,ball_x_motion5 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(0,11);
-    SIGNAL ball_y_motion0, ball_y_motion1, ball_y_motion2,ball_y_motion3,ball_y_motion4,ball_y_motion5 : STD_LOGIC_VECTOR(10 DOWNTO 0) := ball_speed;
-    SIGNAL ball_on_screen : std_logic_vector(5 DOWNTO 0) := (OTHERS => '0')
-```
+* For the group's purposes, they required several balls to be created, and spawn randomly and independently based on any collision they had.
+* In order to do this, the group changed ```ball_on``` and ```game_on``` to vectors with lengths of 9 bits, each of those bits corresponding to x and y coordinate signals that the group created for each ball.
+  ```vhdl
+	SIGNAL ball_on : STD_LOGIC_VECTOR (8 DOWNTO 0):= (OTHERS => '0'); -- indicates whether ball is at current pixel position
+  	SIGNAL game_on : STD_LOGIC_VECTOR (8 DOWNTO 0) := "000000000"; -- indicates whether ball is in play
+  ```
+* A new signal called ```ball_on_screen``` was created also created as a vector of length 9 bits to manage the visibility of the nine balls on the screen.
+  ```vhdl
+	SIGNAL ball_on_screen : STD_LOGIC_VECTOR (8 DOWNTO 0):= (OTHERS => '0')
+  ```
+* As mentioned previously, several signals were created corresponding to various x and y coordinates, each set of which corresponded to its own ball.
+  ```vhdl
+	 SIGNAL ball_x0 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(100, 11); --- each x-coordinate has its own signal
+  	---...
+  	 SIGNAL ball_y0, ball_y1, ball_y2,ball_y3,ball_y4,ball_y5,ball_y6,ball_y7,ball_y8 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(0, 11); -- all y-coordinates have the same initial position
+  ```
+  
 ### Pixel Encoding 
 * Determines the colors of the balls and squares
 * The ball_on(0), ball_on(2),ball_on(6) or ball_on(8) are green circles. ball_on(1), ball_on(3),ball_on(4),ball_on(5) and ball_on(7) are red
@@ -75,30 +71,30 @@ PLACE PICTURE ENTITY TREE
     blue <= NOT (bat_on or ball_on(1)OR ball_on(0)or ball_on(2)or ball_on(3)or ball_on(4)or   ball_on(5) or ball_on(6) or ball_on(7) or ball_on(8));
     
 ```
-### Drawing Circles and Squares (Sneha)
-* The group used the circle equation multiple times to draw each ball. The If/Else statement is used to turn the pixels on and off based on circle equation.
+### Drawing Circles and Squares
+* The group utilized the drawing logic provided to them in the Pong and Bouncing Ball labs in order to create various shapes of balls.
 ```vhdl
 IF ball_on_screen(0) = '1' THEN 
-        IF ((CONV_INTEGER(pixel_col) - CONV_INTEGER(ball_x0))**2 + (CONV_INTEGER(pixel_row) - CONV_INTEGER(ball_y0))**2) <= (bsize*bsize) THEN
+        IF ((CONV_INTEGER(pixel_col) - CONV_INTEGER(ball_x0))**2 + (CONV_INTEGER(pixel_row) - CONV_INTEGER(ball_y0))**2) <= (bsize*bsize) THEN -- circle
                 ball_on(0) <= '1';
             ELSE
                 ball_on(0) <= '0';
         END IF;
     END IF;
-```
-* The group used the square equation multiple times to draw each square. The If/Else statement is used to turn the pixels on and off to create a square.
-```vhdl
-IF ball_on_screen(1) = '1' THEN 
+--...
+IF ball_on_screen(1) = '1' THEN -- 
             IF pixel_col >= ball_x1 - bsize AND
             pixel_col <= ball_x1 + bsize AND
                 pixel_row >= ball_y1 - bsize AND
-                pixel_row <= ball_y1 + bsize THEN
+                pixel_row <= ball_y1 + bsize THEN -- squares
                    ball_on(1) <= '1';
             ELSE
                 ball_on(1) <= '0';
             END IF;
         END IF;
 ```
+* The group used a nested for loop, the outer statement having the condition that ```ball_on_screen(i) = "1"``` in order for the ball to be drawn within the given constraints of the inner statement. As mentioned, these drawings occur when the ball is initially spawned once serve is released and game_on <= "111111111" and when it is respawned.
+  
 ### Finite State Machine 
 * The group set out to modify the logic of the code so that balls may be captured by the basket (formerly the bat), and respawn at the top of the screen.
 * In order to be able to repeatedly verify that a ball needed to be respawned after turning off, the group implemented a finite state machine, which would return to the **ENTER_GAME** state once a collision occured, and check for conditions that allow the ball to respawn.
@@ -203,21 +199,23 @@ randomizer: PROCESS IS
 * After the collision, ball_on_screen and game_on become set to 0. Once this occurs, motion and the drawing of the ball will cease, and restart elsewhere, as specified by the temp variable.
   
 ### Ball-Wall Collisions 
+* The group wanted to extend the respawn logic to when the balls went off of the screen as well.
+* To do this they utilized the logic provided in the original Pong lab for when the ball meets the bottom wall
 * Once the ball reaches the bottom of screen (at 600 pixels), the ball wall will disappear
-  *   The equation adds the current ball position and the radius of the ball.
-  *   The ball_on_screen signal will be set to zero.
-  *   The game_on(0) signal is set to '0'.
-  **   The state returns to Enter_Game.
-```vhdl
-ELSIF ball_y0 + bsize >= 600 THEN -- if ball meets bottom wall
+  ```vhdl
+	ELSIF ball_y0 + bsize >= 600 THEN -- if ball meets bottom wall
                            ball_on_screen(0) <= '0';
                            game_on(0) <= '0';
                            ps_state <= pr_state;
                            nx_state <= ENTER_GAME; 
-```
-
+   ```
+  *   The equation adds the current ball position and the radius of the ball.
+  *   The ball_on_screen signal will be set to zero.
+  *   The game_on(0) signal is set to '0'.
+  **   The state returns to Enter_Game.
  
 ### Corrected Hit_Counter Incrementation
+* The group wanted the signal ```hit_counter``` to increment and decrement upon 
 * Counter will **increase**  when a green ball hits and **decrease** when red square hits the bat.
      * Checks to see if **hit_counter <= "0000000000000000"**  to see whether the state will 
      change to END_GAME 
@@ -250,7 +248,7 @@ ELSIF ball_y0 + bsize >= 600 THEN -- if ball meets bottom wall
                 END IF;
 
 ```
-* If the next tate becomes ENTER_GAME, then the collision_detected resets to False.   
+* If the next state becomes ENTER_GAME, then the collision_detected resets to False.   
 ```
 IF nx_state = ENTER_GAME THEN
                     collision_detected <= FALSE;
