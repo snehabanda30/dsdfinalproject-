@@ -1,4 +1,4 @@
-# DSDFinalProject : COLLECT 
+# DSD Final Project : COLLECT 
 
 # Introduction (Sneha)
 In **COLLECT**, player must collect 5 circles and avoid squares. 
@@ -16,8 +16,9 @@ COLLECT was developed from the lab 6 baseline code. Once the game appears on the
 # Attachments: (Pre)
 
 # Video (Sneha)
+![image](screen.gif) 
 
-
+![image](winningandlosingonboard.gif)
 # Steps to Run Project (Sneha)
 1. Download files: clk_wiz_0, clk_wiz_0_clk_wiz, vga_sync, bat_n_ball, leddec16,pong and opng_2.xdc  
 2. Connect the monitor's HDMI cable to VGA. Also, connect the VGA to Nexys A7-100T board by powering with a USB cable and connecting aux cord to board.  
