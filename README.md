@@ -423,17 +423,8 @@ END PROCESS;
 	slo_clk <= tcount(19); -- clock to control wailing of tone (47.6 Hz)
     led_mpx <= tcount(19 DOWNTO 17); -- 7-seg multiplexing clock    
     add_bb : bat_n_ball
-    PORT MAP(--instantiate bat and ball component
-        v_sync => S_vsync, 
-        pixel_row => S_pixel_row, 
-        pixel_col => S_pixel_col, 
-        bat_x => batpos, 
-        serve => btn0, 
-        red => S_red, 
-        green => S_green, 
-        blue => S_blue,
-        SW => SW,
-        display_hits => display,
+    PORT MAP(
+-...
         sound => sound
         );
 --...
@@ -469,6 +460,18 @@ END PROCESS;
 		data_R <= tone;
 ```
 * The majority of modifications, distinct from those in lab 5, primarily involve the routing of input and output variables.
+* A std_logic signal named 'sound' was incorporated into the ``bat_n_ball.vhd``` file. This signal is set to '1' when the game is turning on or ending.
+```vhd
+WHEN END_GAME =>
+                ball_on_screen <= "000000000";
+                game_on <= "000000000";
+                sound_on <= '1';
+                sound <= sound_on;
+                --ps_state <= pr_state;
+                IF serve = '1' THEN
+                    nx_state <= ENTER_GAME;
+                END IF;
+``` 
 * ```dac_if.vhd``` was also included from lab 5 without any alterations.
 ### Successes and Challenges for Sound Effects
 * The team successfully achieved the correct notes for the sound effects to play at the beginning of the game, as demonstrated in the video
