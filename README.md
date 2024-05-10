@@ -340,7 +340,183 @@ BEGIN
 	END PROCESS;
 	Clk50 <= clk_reg;
 ```
-
+### Modifications for Sound Effect Logic
+* The modifications to the top-level module ```pong.vhd``` were inspired by ```siren.vhd``` from lab 5. This module preserves the timing and logic required for DAC operation. However, it incorporates additional logic and code for music generation and signal combination, similar to how data from the ```wail.vhd``` instance is sent to the DAC.
+```vhdl
+ENTITY pong IS
+    PORT (
+	--...
+        dac_MCLK : OUT STD_LOGIC; -- outputs to PMODI2L DAC
+	dac_LRCK : OUT STD_LOGIC;
+	dac_SCLK : OUT STD_LOGIC;
+	dac_SDIN : OUT STD_LOGIC
+    ); 
+END pong;
+--...
+    SIGNAL tcount : STD_LOGIC_VECTOR (19 DOWNTO 0);
+    SIGNAL cnt : std_logic_vector(20 DOWNTO 0); -- counter to generate timing signals
+    SIGNAL data_L, data_R : SIGNED (15 DOWNTO 0); -- 16-bit signed audio data
+	SIGNAL dac_load_L, dac_load_R : STD_LOGIC; -- timing pulses to load DAC shift reg.
+	SIGNAL slo_clk, sclk, audio_CLK : STD_LOGIC;
+	SIGNAL tone: Signed (15 DOWNTO 0);
+	SIGNAL clk_50mhz : std_logic;
+--...
+COMPONENT bat_n_ball IS
+        PORT (
+	--...
+            sound: OUT STD_LOGIC
+        );
+ COMPONENT CLKDiv2 IS
+		PORT (
+			inclk : IN std_logic;
+			Clk50 : OUT std_logic
+		);
+ COMPONENT WaveGenerator IS
+		PORT (
+			aud_clk : IN std_logic;
+			notee : IN std_logic_vector (4 DOWNTO 0);
+			tonee : OUT signed (15 DOWNTO 0)
+		);
+--...
+COMPONENT dac_if IS
+		PORT (
+			SCLK : IN STD_LOGIC;
+			L_start : IN STD_LOGIC;
+			R_start : IN STD_LOGIC;
+			L_data : IN signed (15 DOWNTO 0);
+			R_data : IN signed (15 DOWNTO 0);
+			SDATA : OUT STD_LOGIC
+		);
+	END COMPONENT;
+COMPONENT game_sound_effects IS
+    PORT (
+        clk : IN STD_LOGIC;  -- Main clock input
+        aud_clk : OUT STD_LOGIC;  -- Clock signal for WaveGenerator
+        note : OUT STD_LOGIC_VECTOR(4 DOWNTO 0); -- Control signal for notes
+        sound_onn:IN STD_LOGIC
+        --tone : OUT signed (15 DOWNTO 0)
+    );
+      END COMPONENT;
+--...
+tim_pr : PROCESS (clk_50MHz) is
+	BEGIN
+		if rising_edge(clk_50MHz) then
+		IF (tcount(9 DOWNTO 0) >= X"00F") AND (tcount(9 DOWNTO 0) < X"02E") THEN
+			dac_load_L <= '1';
+		ELSE
+			dac_load_L <= '0';
+		END IF;
+		IF (tcount(9 DOWNTO 0) >= X"20F") AND (tcount(9 DOWNTO 0) < X"22E") THEN
+			dac_load_R <= '1';
+		ELSE
+			dac_load_R <= '0';
+		END IF;
+		tcount <= tcount + 1;
+	end if;
+END PROCESS;
+    
+    dac_MCLK <= NOT tcount(1); -- DAC master clock (12.5 MHz)
+	audio_CLK <= tcount(9); -- audio sampling rate (48.8 kHz)
+	dac_LRCK <= audio_CLK; -- also sent to DAC as left/right clock
+	sclk <= tcount(4); -- serial data clock (1.56 MHz)
+	dac_SCLK <= sclk; -- also sent to DAC as SCLK
+	slo_clk <= tcount(19); -- clock to control wailing of tone (47.6 Hz)
+    led_mpx <= tcount(19 DOWNTO 17); -- 7-seg multiplexing clock    
+    add_bb : bat_n_ball
+    PORT MAP(--instantiate bat and ball component
+        v_sync => S_vsync, 
+        pixel_row => S_pixel_row, 
+        pixel_col => S_pixel_col, 
+        bat_x => batpos, 
+        serve => btn0, 
+        red => S_red, 
+        green => S_green, 
+        blue => S_blue,
+        SW => SW,
+        display_hits => display,
+        sound => sound
+        );
+--...
+ clk50 : ClkDiv2
+	PORT MAP(
+		inclk => clk_in, 
+		Clk50 => clk_50mhz
+		);
+ music : game_sound_effects
+    PORT MAP(
+        clk => clk_50mhz,
+        aud_clk => aud_clk,
+        note => note, 
+        sound_onn => sound
+        --tone => data_L
+    );
+    dac : dac_if
+		PORT MAP(
+			SCLK => sclk, -- instantiate parallel to serial DAC interface
+			L_start => dac_load_L, 
+			R_start => dac_load_R, 
+			L_data => data_L, 
+			R_data => data_R, 
+			SDATA => dac_SDIN
+		);
+   a1 : WaveGenerator
+		PORT MAP(
+			aud_clk => audio_CLK, 
+			notee => note, 
+			tonee => tone
+		);
+		data_L <= tone;
+		data_R <= tone;
+```
+* The majority of modifications, distinct from those in lab 5, primarily involve the routing of input and output variables.
+* ```dac_if.vhd``` was also included from lab 5 without any alterations.
+### Successes and Challenges
+* The team successfully achieved the correct notes for the sound effects to play at the beginning of the game, as demonstrated in the video
+* Although the sound effects played correctly at the beginning of the game, numerous challenges arose in getting the code to produce the appropriate sound effects for the game's ending (whether winning or losing).
+ *  Instead, a very delayed humming sound would play, and it prevented the correct sound effect from playing when restarting the game
+* The team attempted various approaches to enable the sound to play for the game's ending, but unfortunately, none were successful.
+* One notable example was the team's attempt to utilize a Finite State Machine (FSM) to send the notes to the WaveGeneration file:
+```vhdl
+       CASE pr_state IS
+                WHEN PLAY_A5_SHARP =>
+                    IF note_counter >= note_duration * 2 THEN
+                        nx_state <= PLAY_A5;
+                    ELSIF note_counter > 0 THEN 
+                        note <= "01111"; -- A5#
+                        nx_state <= PLAY_A5_SHARP;
+                    ELSE
+                        note <= "00000";
+                        nx_state <= PLAY_A5_SHARP;
+                   END IF;
+                WHEN PLAY_A5 =>
+                    IF note_counter >= note_duration * 3 THEN
+                        nx_state <= PLAY_G5_SHARP;
+                    ELSE 
+                        note <= "01000"; -- A5
+                        nx_state <= PLAY_A5;
+                    END IF;
+                    
+                WHEN PLAY_G5_SHARP =>
+                    IF note_counter >= note_duration * 4 THEN
+                        nx_state <= PLAY_G5;
+                    ELSE 
+                        note <= "00111"; -- A5
+                        nx_state <= PLAY_G5_SHARP;
+                    END IF;
+                    
+                WHEN PLAY_G5 =>
+                    IF note_counter >= note_duration * 5 THEN
+                        nx_state <= END_SOUND;
+                    ELSE 
+                        note <= "01001"; -- G5 -- A5
+                        nx_state <= PLAY_G5;
+                    END IF;
+                WHEN END_SOUND =>
+                     Stop playing sound effects
+                    note <= "00000";
+            END CASE;
+```
+* However, this approach yielded little progress and did not solve the problem. Due to time constraints, the team ultimately decided to allow the music to play only at the very beginning of the game.
 ## Process Summary (Sneha)
 
 ## Important Ports and Signals (Pre)
