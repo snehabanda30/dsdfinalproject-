@@ -24,7 +24,9 @@ WRITE DESCRIPITION OF PROJECT --> Any inspiration for project --> pong lab and p
 PLACE PICTURE ENTITY TREE
 
 ### Set of nine balls
-* Nine balls were initialized with different X coordinates and a Y coordinate set to zero to display the balls at various positions across the top of the screen.
+* In the original Pong lab, ```ball_on``` and ```game_on``` were signals responsible for the drawing and positioning of one ball in the bat_n_ball component file.
+* For the group's purposes, they required several balls to be created, and spawn randomly and independently based on any collision they had. 
+* In order to do this, the group changed ```ball_on``` and ```game_on``` to vectors with lengths of 9 bits, each of those bits corresponding to x and y coordinate signals that the group 
 * A new variable called 'ball_on_screen' was created as a std_logic_vector(8 downto 0) to manage the visibility of the nine balls on the screen.
 * For the balls to move vertically (in the y direction), all ball_x_motion values are set to zero, while ball_y_motion is determined by the specified ball_speed.
 
