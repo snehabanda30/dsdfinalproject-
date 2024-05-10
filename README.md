@@ -201,18 +201,14 @@ randomizer: PROCESS IS
 ### Ball-Wall Collisions 
 * The group wanted to extend the respawn logic to when the balls went off of the screen as well.
 * To do this they utilized the logic provided in the original Pong lab for when the ball meets the bottom wall
-* Once the ball reaches the bottom of screen (at 600 pixels), the ball wall will disappear
-  ```vhdl
+    ```vhdl
 	ELSIF ball_y0 + bsize >= 600 THEN -- if ball meets bottom wall
                            ball_on_screen(0) <= '0';
                            game_on(0) <= '0';
                            ps_state <= pr_state;
                            nx_state <= ENTER_GAME; 
    ```
-  *   The equation adds the current ball position and the radius of the ball.
-  *   The ball_on_screen signal will be set to zero.
-  *   The game_on(0) signal is set to '0'.
-  **   The state returns to Enter_Game.
+* This logic dictates that if the sum of the y coordinate and the radius of the ball is greater than the screen height, the signals controlling the movement and appearance of the ball will become 0, and the next state will be **ENTER_GAME**.
  
 ### Corrected Hit_Counter Incrementation
 * The group wanted the signal ```hit_counter``` to increment and decrement upon 
