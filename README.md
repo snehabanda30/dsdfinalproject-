@@ -409,8 +409,109 @@ WHEN END_GAME =>
                 END IF;
 ``` 
 * ```dac_if.vhd``` was also included from lab 5 without any alterations.
-### Successes and Challenges for Sound Effects
 * The team successfully achieved the correct notes for the sound effects to play at the beginning of the game, as demonstrated in the video
+  
+## Process Summary (Sneha)
+### Challenges 
+#### Motion
+#### Respawn
+* Although the team eventually succeeded in getting the balls to respawn correctly, initially, they encountered significant difficulty in achieving this.
+* They made multiple attempts and tried various codes before achieving success.
+* One of the respawn attempts involved the following code:
+```vhd
+WHEN START_COLL =>
+            --collision cases
+                IF (ball_x0 + bsize/2) >= (bat_x - bat_w) AND
+                   (ball_x0 - bsize/2) <= (bat_x + bat_w) AND
+                   (ball_y0 + bsize/2) >= (bat_y - bat_h) AND
+                   (ball_y0 - bsize/2) <= (bat_y + bat_h) THEN
+                           ball_on_screen(1) <= '0';
+                           hit_counter <= hit_counter + "0000000000000001";
+                           display_hits <= hit_counter;
+                           ball_x0 <= conv_std_logic_vector(counter1 * 5 mod 700, 10);
+                           ball_y0 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                           ball_on_screen(0) <= '1';      
+                           --nx_state <= ENTER_GAME;
+                ELSIF ball_y0 + bsize >= 600 THEN -- if ball meets bottom wall
+                           ball_on_screen(0) <= '0';
+                           ball_x0 <= conv_std_logic_vector(counter1 * 5 mod 700, 10);
+                           ball_y0 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                           ball_on_screen(0) <= '1';      
+                END IF;
+                
+                IF (ball_x1 + bsize/2) >= (bat_x - bat_w) AND
+                   (ball_x1 - bsize/2) <= (bat_x + bat_w) AND
+                   (ball_y1 + bsize/2) >= (bat_y - bat_h) AND
+                   (ball_y1 - bsize/2) <= (bat_y + bat_h) THEN
+                           ball_on_screen(1) <= '0';
+                           hit_counter <= hit_counter - "0000000000000001";
+                           display_hits <= hit_counter;
+                           ball_x1 <= conv_std_logic_vector(counter2 * 5 mod 700, 10);
+                           ball_y1 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                           --nx_state <= ENTER_GAME;
+                ELSIF ball_y1 + bsize >= 600 THEN -- if ball meets bottom wall
+                           ball_on_screen(1) <= '0';
+                           ball_x1 <= conv_std_logic_vector(counter2 * 5 mod 700, 10);
+                           ball_y1 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                           --nx_state <= ENTER_GAME;    
+                ElsIF hit_counter <= "0000000000000000" THEN
+                       ball_on_screen <= "000";
+                       game_on <= '0'; 
+                       nx_state <= ENTER_GAME;   
+                END IF;    
+            END CASE;
+```
+* this approach did not yield the desired outcome. Instead, it caused the ball to spawn randomly while descending, leading to erratic movements on the screen, contrary to the team's intentions.
+* Despite trying multiple other approaches, they encountered similar issues with the ball spawning randomly or unexpectedly disappearing during gameplay. These repeated failures indicated that they were approaching the problem incorrectly.
+* In their attempt to rectify the issue, the team inadvertently worsened the situation, resulting in the balls no longer disappearing after collisions using the code below:
+```vhd
+WHEN START_COLL =>
+            --collision cases
+                IF (ball_x0 + bsize/2) >= (bat_x - bat_w) AND
+                   (ball_x0 - bsize/2) <= (bat_x + bat_w) AND
+                   (ball_y0 + bsize/2) >= (bat_y - bat_h) AND
+                   (ball_y0 - bsize/2) <= (bat_y + bat_h) THEN
+                           ball_on_screen(1) <= '0';
+                           hit_counter <= hit_counter + "0000000000000001";
+                           display_hits <= hit_counter;
+                           ball_x0 <= conv_std_logic_vector(100, 10);
+                           ball_y0 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                           ball_on_screen(0) <= '1';      
+                           --nx_state <= ENTER_GAME;
+                ELSIF ball_y0 + bsize >= 600 THEN -- if ball meets bottom wall
+                           ball_on_screen(0) <= '0';
+                           ball_x0 <= conv_std_logic_vector(500, 10);
+                           ball_y0 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                           ball_on_screen(0) <= '1';      
+                END IF;
+                
+                IF (ball_x1 + bsize/2) >= (bat_x - bat_w) AND
+                   (ball_x1 - bsize/2) <= (bat_x + bat_w) AND
+                   (ball_y1 + bsize/2) >= (bat_y - bat_h) AND
+                   (ball_y1 - bsize/2) <= (bat_y + bat_h) THEN
+                           ball_on_screen(1) <= '0';
+                           hit_counter <= hit_counter - "0000000000000001";
+                           display_hits <= hit_counter;
+                           ball_x1 <= conv_std_logic_vector(500, 10);
+                           ball_y1 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                           --nx_state <= ENTER_GAME;
+                ELSIF ball_y1 + bsize >= 600 THEN -- if ball meets bottom wall
+                           ball_on_screen(1) <= '0';
+                           ball_x1 <= conv_std_logic_vector(700, 10);
+                           ball_y1 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                           --nx_state <= ENTER_GAME;    
+                ElsIF hit_counter <= "0000000000000000" THEN
+                       ball_on_screen <= "000";
+                       game_on <= '0'; 
+                       nx_state <= ENTER_GAME;   
+                END IF;    
+            END CASE;
+```
+* After numerous trial and error attempts, they eventually arrived at the correct respawning code. This was achieved by refining the FSM logic, enabling the balls to respawn in different locations successfully.
+  
+#### Hit_Counter Incrementation
+
+#### Sound Effects
 * Although the sound effects played correctly at the beginning of the game, numerous challenges arose in getting the code to produce the appropriate sound effects for the game's ending (whether winning or losing).
  *  Instead, a very delayed humming sound would play, and it prevented the correct sound effect from playing when restarting the game
 * The team attempted various approaches to enable the sound to play for the game's ending, but unfortunately, none were successful.
@@ -456,7 +557,7 @@ WHEN END_GAME =>
             END CASE;
 ```
 * However, this approach yielded little progress and did not solve the problem. Due to time constraints, the team ultimately decided to allow the music to play only at the very beginning of the game.
-## Process Summary (Sneha)
+
 
 ## Important Ports and Signals (Pre)
 * ```ball_on_screen(8 downto 0)```, ```ball_on(8 downto 0)```, ```game_on(8 downto 0)```: controls individual balls' pixels, drawing, and motions
