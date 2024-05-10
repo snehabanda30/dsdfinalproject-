@@ -585,7 +585,32 @@ BEGIN
                 ELSE nx_state <= ENTER_GAME;
                 END IF;  
 ```
-
+* This realization prompted the team to understand that they were placing the hit_counter value in the wrong location. This became evident when they observed that changing the value of where it was declared caused the LED to display only that value, regardless of the collisions.
+* Additionally, they observed a solution to avoid the double counting issue in lab 6, where a flag was utilized. Recognizing its effectiveness, they implemented the same approach in their project.
+```vhd
+    END IF;
+            WHEN START_COLL =>
+            
+                IF (ball_x0 + bsize/2) >= (bat_x - bat_w) AND
+                   (ball_x0 - bsize/2) <= (bat_x + bat_w) AND
+                   (ball_y0 + bsize/2) >= (bat_y - bat_h) AND
+                   (ball_y0 - bsize/2) <= (bat_y + bat_h) AND  count_tmp = "0000000000000000" THEN
+                           ball_on_screen(0) <= '0';
+                           game_on(0) <= '0';
+                           count_tmp <= "1111111111111111";
+                           hit_counter <= hit_counter + "0000000000000001";
+                           display_hits <= hit_counter;
+                           ps_state <= pr_state;
+                           nx_state <= ENTER_GAME;
+                ELSIF ball_y0 + bsize >= 600 THEN -- if ball meets bottom wall
+                           ball_on_screen(0) <= '0';
+                           game_on(0) <= '0';
+                           ps_state <= pr_state;
+                           nx_state <= ENTER_GAME;       
+                END IF;
+```
+* However, despite implementing the flag from lab 6, they found that it did not resolve the issues, and they continued to encounter the same problems.
+* After further investigation, they realized that they had been using the flag incorrectly and that it wasn't having any effect. Consequently, they modified the code accordingly, and eventually, they succeeded in getting the counter to count correctly.
 #### Sound Effects
 * Although the sound effects played correctly at the beginning of the game, numerous challenges arose in getting the code to produce the appropriate sound effects for the game's ending (whether winning or losing).
  *  Instead, a very delayed humming sound would play, and it prevented the correct sound effect from playing when restarting the game
@@ -632,7 +657,6 @@ BEGIN
             END CASE;
 ```
 * However, this approach yielded little progress and did not solve the problem. Due to time constraints, the team ultimately decided to allow the music to play only at the very beginning of the game.
-
 
 ## Important Ports and Signals (Pre)
 * ```ball_on_screen(8 downto 0)```, ```ball_on(8 downto 0)```, ```game_on(8 downto 0)```: controls individual balls' pixels, drawing, and motions
