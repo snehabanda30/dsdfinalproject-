@@ -9,43 +9,59 @@ In **COLLECT**, player must get five points by collecting green circles and avoi
           **Increments** when a green ball hits bat
            **Decrements** when a red square hits bat  
 
+# Expected Behavior 
+
+COLLECT was developed from the lab 6 baseline code. Once the game appears on the monitor, a starting audio will play. The player will press on BTNC to make 5 squares and 4 circles appear with different speeds and locations. The player will need to use the BTNR and BTNL button to move the bat across the screen to catch the green circle. If the player catches the green circle, then the score increments by one. If the player mistakenly catches the red square, then the score will decrement by one. Once the player gets five points, the player has won the game and can restart the game. However, when the game is in play and score reaches zero, the player has lost the game and must restart.  
 
 ## Attachments:
 [NI Digilent Nexys A7-100T FPGA Trainer Board](https://digilent.com/shop/nexys-a7-fpga-trainer-board-recommended-for-ece-curriculum/)
 
 ![NI Digilent Nexys A7-100T FPGA Trainer Board](NexysA7-obl-600__85101.jpg)
 
+[Pmod I2S](https://digilent.com/reference/pmod/pmodi2s/start?redirect=1)
+
+![Pmod I2S](i2s.png)
 ## Video (Sneha)
+![image](screen.gif) 
+
+![image](winningandlosingonboard.gif)
+
+![image](IMG_6835.gif)
+
+[Audio for Music](https://www.youtube.com/shorts/x4X-i4yPIbg)
 
 ## Steps to Run Project (Sneha)
+1. Download files: clk_wiz_0, clk_wiz_0_clk_wiz, vga_sync, bat_n_ball, leddec16,pong and pong_2.xdc  
+2. Connect the monitor's HDMI cable to VGA. Also, connect the VGA to Nexys A7-100T board by powering with a USB cable and connecting aux cord to board.  
+3. Connect the board via a PROG UART to computer to upload code. 
+4. Run Synthesis 
+5. Run Implementation
+6. Generate bitstream, open hardware manager, and program device
+7. Press down BTNC to begin game
+   * Use the BTNL and BTNR to move the bat across the screen
 
 ## Modifications 
-WRITE DESCRIPITION OF PROJECT --> Any inspiration for project --> pong lab and project evade 
 PLACE PICTURE ENTITY TREE
 
-### Set of nine balls
+### Set of Nine Balls
 * In the original Pong lab, ```ball_on``` and ```game_on``` were signals responsible for the drawing and positioning of one ball in the bat_n_ball component file.
-* For the group's purposes, they required several balls to be created, and spawn randomly and independently based on any collision they had. 
-* In order to do this, the group changed ```ball_on``` and ```game_on``` to vectors with lengths of 9 bits, each of those bits corresponding to x and y coordinate signals that the group 
-* A new variable called 'ball_on_screen' was created as a std_logic_vector(8 downto 0) to manage the visibility of the nine balls on the screen.
-* For the balls to move vertically (in the y direction), all ball_x_motion values are set to zero, while ball_y_motion is determined by the specified ball_speed.
-
-```vhdl
-    SIGNAL start_pos : STD_LOGIC_VECTOR(10 downto 0);
-    SIGNAL ball_x0 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(100, 11);
-    SIGNAL ball_x1 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(350, 11);
-    SIGNAL ball_x2 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(450, 11);
-    SIGNAL ball_x3 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(550, 11);
-    SIGNAL ball_x4 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(650, 11);
-    SIGNAL ball_x5 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(750, 11);
-    SIGNAL ball_y0, ball_y1, ball_y2,ball_y3,ball_y4,ball_y5 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(0, 11);
-    -- bat vertical position
-    CONSTANT bat_y : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(500, 11);
-    -- current ball motion - initialized to (+ ball_speed) pixels/frame in both X and Y directions
-    SIGNAL ball_x_motion0, ball_x_motion1, ball_x_motion2,ball_x_motion3,ball_x_motion4,ball_x_motion5 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(0,11);
-    SIGNAL ball_y_motion0, ball_y_motion1, ball_y_motion2,ball_y_motion3,ball_y_motion4,ball_y_motion5 : STD_LOGIC_VECTOR(10 DOWNTO 0) := ball_speed;
-    SIGNAL ball_on_screen : std_logic_vector(5 DOWNTO 0) := (OTHERS => '0')
-```
+* For the group's purposes, they required several balls to be created, and spawn randomly and independently based on any collision they had.
+* In order to do this, the group changed ```ball_on``` and ```game_on``` to vectors with lengths of 9 bits, each of those bits corresponding to x and y coordinate signals that the group created for each ball.
+  ```vhdl
+	SIGNAL ball_on : STD_LOGIC_VECTOR (8 DOWNTO 0):= (OTHERS => '0'); -- indicates whether ball is at current pixel position
+  	SIGNAL game_on : STD_LOGIC_VECTOR (8 DOWNTO 0) := "000000000"; -- indicates whether ball is in play
+  ```
+* A new signal called ```ball_on_screen``` was created also created as a vector of length 9 bits to manage the visibility of the nine balls on the screen.
+  ```vhdl
+	SIGNAL ball_on_screen : STD_LOGIC_VECTOR (8 DOWNTO 0):= (OTHERS => '0')
+  ```
+* As mentioned previously, several signals were created corresponding to various x and y coordinates, each set of which corresponded to its own ball.
+  ```vhdl
+	 SIGNAL ball_x0 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(100, 11); --- each x-coordinate has its own signal
+  	---...
+  	 SIGNAL ball_y0, ball_y1, ball_y2,ball_y3,ball_y4,ball_y5,ball_y6,ball_y7,ball_y8 : STD_LOGIC_VECTOR(10 DOWNTO 0) := CONV_STD_LOGIC_VECTOR(0, 11); -- all y-coordinates have the same initial position
+  ```
+  
 ### Pixel Encoding 
 * Determines the colors of the balls and squares
 * The ball_on(0), ball_on(2),ball_on(6) or ball_on(8) are green circles. ball_on(1), ball_on(3),ball_on(4),ball_on(5) and ball_on(7) are red
@@ -55,30 +71,30 @@ PLACE PICTURE ENTITY TREE
     blue <= NOT (bat_on or ball_on(1)OR ball_on(0)or ball_on(2)or ball_on(3)or ball_on(4)or   ball_on(5) or ball_on(6) or ball_on(7) or ball_on(8));
     
 ```
-### Drawing Circles and Squares (Sneha)
-* The group used the circle equation multiple times to draw each ball. The If/Else statement is used to turn the pixels on and off based on circle equation.
+### Drawing Circles and Squares
+* The group utilized the drawing logic provided to them in the Pong and Bouncing Ball labs in order to create various shapes of balls.
 ```vhdl
 IF ball_on_screen(0) = '1' THEN 
-        IF ((CONV_INTEGER(pixel_col) - CONV_INTEGER(ball_x0))**2 + (CONV_INTEGER(pixel_row) - CONV_INTEGER(ball_y0))**2) <= (bsize*bsize) THEN
+        IF ((CONV_INTEGER(pixel_col) - CONV_INTEGER(ball_x0))**2 + (CONV_INTEGER(pixel_row) - CONV_INTEGER(ball_y0))**2) <= (bsize*bsize) THEN -- circle
                 ball_on(0) <= '1';
             ELSE
                 ball_on(0) <= '0';
         END IF;
     END IF;
-```
-* The group used the square equation multiple times to draw each square. The If/Else statement is used to turn the pixels on and off to create a square.
-```vhdl
-IF ball_on_screen(1) = '1' THEN 
+--...
+IF ball_on_screen(1) = '1' THEN -- 
             IF pixel_col >= ball_x1 - bsize AND
             pixel_col <= ball_x1 + bsize AND
                 pixel_row >= ball_y1 - bsize AND
-                pixel_row <= ball_y1 + bsize THEN
+                pixel_row <= ball_y1 + bsize THEN -- squares
                    ball_on(1) <= '1';
             ELSE
                 ball_on(1) <= '0';
             END IF;
         END IF;
 ```
+* The group used a nested for loop, the outer statement having the condition that ```ball_on_screen(i) = "1"``` in order for the ball to be drawn within the given constraints of the inner statement. As mentioned, these drawings occur when the ball is initially spawned once serve is released and game_on <= "111111111" and when it is respawned.
+  
 ### Finite State Machine 
 * The group set out to modify the logic of the code so that balls may be captured by the basket (formerly the bat), and respawn at the top of the screen.
 * In order to be able to repeatedly verify that a ball needed to be respawned after turning off, the group implemented a finite state machine, which would return to the **ENTER_GAME** state once a collision occured, and check for conditions that allow the ball to respawn.
@@ -183,21 +199,23 @@ randomizer: PROCESS IS
 * After the collision, ball_on_screen and game_on become set to 0. Once this occurs, motion and the drawing of the ball will cease, and restart elsewhere, as specified by the temp variable.
   
 ### Ball-Wall Collisions 
+* The group wanted to extend the respawn logic to when the balls went off of the screen as well.
+* To do this they utilized the logic provided in the original Pong lab for when the ball meets the bottom wall
 * Once the ball reaches the bottom of screen (at 600 pixels), the ball wall will disappear
-  *   The equation adds the current ball position and the radius of the ball.
-  *   The ball_on_screen signal will be set to zero.
-  *   The game_on(0) signal is set to '0'.
-  **   The state returns to Enter_Game.
-```vhdl
-ELSIF ball_y0 + bsize >= 600 THEN -- if ball meets bottom wall
+  ```vhdl
+	ELSIF ball_y0 + bsize >= 600 THEN -- if ball meets bottom wall
                            ball_on_screen(0) <= '0';
                            game_on(0) <= '0';
                            ps_state <= pr_state;
                            nx_state <= ENTER_GAME; 
-```
-
+   ```
+  *   The equation adds the current ball position and the radius of the ball.
+  *   The ball_on_screen signal will be set to zero.
+  *   The game_on(0) signal is set to '0'.
+  **   The state returns to Enter_Game.
  
 ### Corrected Hit_Counter Incrementation
+* The group wanted the signal ```hit_counter``` to increment and decrement upon 
 * Counter will **increase**  when a green ball hits and **decrease** when red square hits the bat.
      * Checks to see if **hit_counter <= "0000000000000000"**  to see whether the state will 
      change to END_GAME 
@@ -230,7 +248,7 @@ ELSIF ball_y0 + bsize >= 600 THEN -- if ball meets bottom wall
                 END IF;
 
 ```
-* If the next tate becomes ENTER_GAME, then the collision_detected resets to False.   
+* If the next state becomes ENTER_GAME, then the collision_detected resets to False.   
 ```
 IF nx_state = ENTER_GAME THEN
                     collision_detected <= FALSE;
@@ -396,17 +414,8 @@ END PROCESS;
 	slo_clk <= tcount(19); -- clock to control wailing of tone (47.6 Hz)
     led_mpx <= tcount(19 DOWNTO 17); -- 7-seg multiplexing clock    
     add_bb : bat_n_ball
-    PORT MAP(--instantiate bat and ball component
-        v_sync => S_vsync, 
-        pixel_row => S_pixel_row, 
-        pixel_col => S_pixel_col, 
-        bat_x => batpos, 
-        serve => btn0, 
-        red => S_red, 
-        green => S_green, 
-        blue => S_blue,
-        SW => SW,
-        display_hits => display,
+    PORT MAP(
+-...
         sound => sound
         );
 --...
@@ -442,9 +451,222 @@ END PROCESS;
 		data_R <= tone;
 ```
 * The majority of modifications, distinct from those in lab 5, primarily involve the routing of input and output variables.
+* A std_logic signal named 'sound' was incorporated into the ``bat_n_ball.vhd``` file. This signal is set to '1' when the game is turning on or ending.
+```vhd
+WHEN END_GAME =>
+                ball_on_screen <= "000000000";
+                game_on <= "000000000";
+                sound_on <= '1';
+                sound <= sound_on;
+                --ps_state <= pr_state;
+                IF serve = '1' THEN
+                    nx_state <= ENTER_GAME;
+                END IF;
+``` 
 * ```dac_if.vhd``` was also included from lab 5 without any alterations.
-### Successes and Challenges for Sound Effects
 * The team successfully achieved the correct notes for the sound effects to play at the beginning of the game, as demonstrated in the video
+  
+## Process Summary (Sneha)
+### Challenges 
+#### Motion
+#### Respawn
+* Although the team eventually succeeded in getting the balls to respawn correctly, initially, they encountered significant difficulty in achieving this.
+* They made multiple attempts and tried various codes before achieving success.
+* One of the respawn attempts involved the following code:
+```vhd
+WHEN START_COLL =>
+            --collision cases
+                IF (ball_x0 + bsize/2) >= (bat_x - bat_w) AND
+                   (ball_x0 - bsize/2) <= (bat_x + bat_w) AND
+                   (ball_y0 + bsize/2) >= (bat_y - bat_h) AND
+                   (ball_y0 - bsize/2) <= (bat_y + bat_h) THEN
+                           ball_on_screen(1) <= '0';
+                           hit_counter <= hit_counter + "0000000000000001";
+                           display_hits <= hit_counter;
+                           ball_x0 <= conv_std_logic_vector(counter1 * 5 mod 700, 10);
+                           ball_y0 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                           ball_on_screen(0) <= '1';      
+                           --nx_state <= ENTER_GAME;
+                ELSIF ball_y0 + bsize >= 600 THEN -- if ball meets bottom wall
+                           ball_on_screen(0) <= '0';
+                           ball_x0 <= conv_std_logic_vector(counter1 * 5 mod 700, 10);
+                           ball_y0 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                           ball_on_screen(0) <= '1';      
+                END IF;
+                
+                IF (ball_x1 + bsize/2) >= (bat_x - bat_w) AND
+                   (ball_x1 - bsize/2) <= (bat_x + bat_w) AND
+                   (ball_y1 + bsize/2) >= (bat_y - bat_h) AND
+                   (ball_y1 - bsize/2) <= (bat_y + bat_h) THEN
+                           ball_on_screen(1) <= '0';
+                           hit_counter <= hit_counter - "0000000000000001";
+                           display_hits <= hit_counter;
+                           ball_x1 <= conv_std_logic_vector(counter2 * 5 mod 700, 10);
+                           ball_y1 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                           --nx_state <= ENTER_GAME;
+                ELSIF ball_y1 + bsize >= 600 THEN -- if ball meets bottom wall
+                           ball_on_screen(1) <= '0';
+                           ball_x1 <= conv_std_logic_vector(counter2 * 5 mod 700, 10);
+                           ball_y1 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                           --nx_state <= ENTER_GAME;    
+                ElsIF hit_counter <= "0000000000000000" THEN
+                       ball_on_screen <= "000";
+                       game_on <= '0'; 
+                       nx_state <= ENTER_GAME;   
+                END IF;    
+            END CASE;
+```
+* this approach did not yield the desired outcome. Instead, it caused the ball to spawn randomly while descending, leading to erratic movements on the screen, contrary to the team's intentions.
+* Despite trying multiple other approaches, they encountered similar issues with the ball spawning randomly or unexpectedly disappearing during gameplay. These repeated failures indicated that they were approaching the problem incorrectly.
+* In their attempt to rectify the issue, the team inadvertently worsened the situation, resulting in the balls no longer disappearing after collisions using the code below:
+```vhd
+WHEN START_COLL =>
+            --collision cases
+                IF (ball_x0 + bsize/2) >= (bat_x - bat_w) AND
+                   (ball_x0 - bsize/2) <= (bat_x + bat_w) AND
+                   (ball_y0 + bsize/2) >= (bat_y - bat_h) AND
+                   (ball_y0 - bsize/2) <= (bat_y + bat_h) THEN
+                           ball_on_screen(1) <= '0';
+                           hit_counter <= hit_counter + "0000000000000001";
+                           display_hits <= hit_counter;
+                           ball_x0 <= conv_std_logic_vector(100, 10);
+                           ball_y0 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                           ball_on_screen(0) <= '1';      
+                           --nx_state <= ENTER_GAME;
+                ELSIF ball_y0 + bsize >= 600 THEN -- if ball meets bottom wall
+                           ball_on_screen(0) <= '0';
+                           ball_x0 <= conv_std_logic_vector(500, 10);
+                           ball_y0 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                           ball_on_screen(0) <= '1';      
+                END IF;
+                
+                IF (ball_x1 + bsize/2) >= (bat_x - bat_w) AND
+                   (ball_x1 - bsize/2) <= (bat_x + bat_w) AND
+                   (ball_y1 + bsize/2) >= (bat_y - bat_h) AND
+                   (ball_y1 - bsize/2) <= (bat_y + bat_h) THEN
+                           ball_on_screen(1) <= '0';
+                           hit_counter <= hit_counter - "0000000000000001";
+                           display_hits <= hit_counter;
+                           ball_x1 <= conv_std_logic_vector(500, 10);
+                           ball_y1 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                           --nx_state <= ENTER_GAME;
+                ELSIF ball_y1 + bsize >= 600 THEN -- if ball meets bottom wall
+                           ball_on_screen(1) <= '0';
+                           ball_x1 <= conv_std_logic_vector(700, 10);
+                           ball_y1 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                           --nx_state <= ENTER_GAME;    
+                ElsIF hit_counter <= "0000000000000000" THEN
+                       ball_on_screen <= "000";
+                       game_on <= '0'; 
+                       nx_state <= ENTER_GAME;   
+                END IF;    
+            END CASE;
+```
+* After numerous trial and error attempts, they eventually arrived at the correct respawning code. This was achieved by refining the FSM logic, enabling the balls to respawn in different locations successfully.
+  
+#### Hit_Counter Incrementation
+* The most significant challenge the team encountered with the hit counter was that every collision was double-counted, whereas the team intended for each collision to count as only one point.
+```vhd
+ IF (ball_x1 + bsize/2) >= (bat_x - bat_w) AND
+                   (ball_x1 - bsize/2) <= (bat_x + bat_w) AND
+                   (ball_y1 + bsize/2) >= (bat_y - bat_h) AND
+                   (ball_y1 - bsize/2) <= (bat_y + bat_h) THEN
+                           ball_on_screen(1) <= '0';
+                           game_on(1) <= '0';
+                           hit_counter <= hit_counter - "0000000000000001";
+                           display_hits <= hit_counter;
+                           if hit_counter <= "0000000000000011" THEN
+                           ps_state <= pr_state;
+                           nx_state <= END_GAME;
+                           ELSE
+                           ps_state <= pr_state;
+                           nx_state <= ENTER_GAME;
+                           end if;
+                ELSIF ball_y1 + bsize >= 600 THEN -- if ball meets bottom wall
+                           ball_on_screen(1) <= '0';
+                           game_on(1) <= '0';
+                           ps_state <= pr_state;
+                           nx_state <= ENTER_GAME;       
+                END IF; 
+                
+                 IF (ball_x2 + bsize/2) >= (bat_x - bat_w) AND
+                   (ball_x2 - bsize/2) <= (bat_x + bat_w) AND
+                   (ball_y2 + bsize/2) >= (bat_y - bat_h) AND
+                   (ball_y2 - bsize/2) <= (bat_y + bat_h) THEN
+                           ball_on_screen(2) <= '0';
+                           game_on(2) <= '0';
+                           hit_counter <= hit_counter + "0000000000000001";
+                           display_hits <= hit_counter;
+                           ps_state <= pr_state;
+                           nx_state <= ENTER_GAME;
+                ELSIF ball_y2 + bsize >= 600 THEN -- if ball meets bottom wall
+                           ball_on_screen(2) <= '0';
+                           game_on(2) <= '0';
+                           ps_state <= pr_state;
+                           nx_state <= ENTER_GAME;
+```
+* Despite multiple attempts to rectify the code, they were unsuccessful in resolving the issue.
+* Additionally, they aimed for the game to end whenever the hit counter reached zero. To achieve this, they set the counter to zero outside of the FSM. However, this led to the attempt below, where the counter always displayed zero regardless of the actual score.
+```vhd
+BEGIN
+        ball_speed <= "00000000010";
+        hit_counter <= "0000000000000000";
+        count_tmp <= "0000000000000000";
+        WAIT UNTIL rising_edge(v_sync);
+            pr_state <= nx_state;
+        CASE pr_state IS 
+            WHEN ENTER_GAME => 
+                IF serve = '1' THEN
+                    nx_state <= SERVE_RELEASE;
+                ELSIF (game_on(0) = '1' AND game_on(1) = '1' AND game_on(2) ='1' AND game_on(3) ='1' AND game_on(4) ='1'AND game_on(5) ='1') THEN
+                    ball_on_screen(0) <= '1';
+                    ball_on_screen(1) <= '1';
+                    ball_on_screen(2) <= '1';
+                    ball_on_screen(3) <= '1';
+                    ball_on_screen(4) <= '1';
+                    ball_on_screen(5) <= '1';
+                    ball_y_motion0 <= ball_speed + 3;
+                    ball_y_motion1 <= ball_speed + 1;
+                    ball_y_motion2 <= ball_speed + 3;
+                    ball_y_motion3 <= ball_speed + 1;
+                    ball_y_motion4 <= ball_speed + 3;
+                    ball_y_motion5 <= ball_speed + 1;
+                    nx_state <= START_COLL;
+                ELSIF (game_on(0) = '0' AND ball_on_screen(0) = '0' AND ps_state = START_COLL) THEN
+                    game_on(0) <= '1';
+                    ball_on_screen(0) <= '1';
+                    ball_y_motion0 <= ball_speed + 3;
+                    nx_state <= START_COLL;
+                ELSE nx_state <= ENTER_GAME;
+                END IF;  
+```
+* This realization prompted the team to understand that they were placing the hit_counter value in the wrong location. This became evident when they observed that changing the value of where it was declared caused the LED to display only that value, regardless of the collisions.
+* Additionally, they observed a solution to avoid the double counting issue in lab 6, where a flag was utilized. Recognizing its effectiveness, they implemented the same approach in their project.
+```vhd
+    END IF;
+            WHEN START_COLL =>
+            
+                IF (ball_x0 + bsize/2) >= (bat_x - bat_w) AND
+                   (ball_x0 - bsize/2) <= (bat_x + bat_w) AND
+                   (ball_y0 + bsize/2) >= (bat_y - bat_h) AND
+                   (ball_y0 - bsize/2) <= (bat_y + bat_h) AND  count_tmp = "0000000000000000" THEN
+                           ball_on_screen(0) <= '0';
+                           game_on(0) <= '0';
+                           count_tmp <= "1111111111111111";
+                           hit_counter <= hit_counter + "0000000000000001";
+                           display_hits <= hit_counter;
+                           ps_state <= pr_state;
+                           nx_state <= ENTER_GAME;
+                ELSIF ball_y0 + bsize >= 600 THEN -- if ball meets bottom wall
+                           ball_on_screen(0) <= '0';
+                           game_on(0) <= '0';
+                           ps_state <= pr_state;
+                           nx_state <= ENTER_GAME;       
+                END IF;
+```
+* However, despite implementing the flag from lab 6, they found that it did not resolve the issues, and they continued to encounter the same problems.
+* After further investigation, they realized that they had been using the flag incorrectly and that it wasn't having any effect. Consequently, they modified the code accordingly, and eventually, they succeeded in getting the counter to count correctly.
+#### Sound Effects
 * Although the sound effects played correctly at the beginning of the game, numerous challenges arose in getting the code to produce the appropriate sound effects for the game's ending (whether winning or losing).
  *  Instead, a very delayed humming sound would play, and it prevented the correct sound effect from playing when restarting the game
 * The team attempted various approaches to enable the sound to play for the game's ending, but unfortunately, none were successful.
@@ -490,7 +712,6 @@ END PROCESS;
             END CASE;
 ```
 * However, this approach yielded little progress and did not solve the problem. Due to time constraints, the team ultimately decided to allow the music to play only at the very beginning of the game.
-## Process Summary (Sneha)
 
 ## Important Ports and Signals (Pre)
 * ```ball_on_screen(8 downto 0)```, ```ball_on(8 downto 0)```, ```game_on(8 downto 0)```: controls individual balls' pixels, drawing, and motions
