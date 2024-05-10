@@ -510,6 +510,81 @@ WHEN START_COLL =>
 * After numerous trial and error attempts, they eventually arrived at the correct respawning code. This was achieved by refining the FSM logic, enabling the balls to respawn in different locations successfully.
   
 #### Hit_Counter Incrementation
+* The most significant challenge the team encountered with the hit counter was that every collision was double-counted, whereas the team intended for each collision to count as only one point.
+```vhd
+ IF (ball_x1 + bsize/2) >= (bat_x - bat_w) AND
+                   (ball_x1 - bsize/2) <= (bat_x + bat_w) AND
+                   (ball_y1 + bsize/2) >= (bat_y - bat_h) AND
+                   (ball_y1 - bsize/2) <= (bat_y + bat_h) THEN
+                           ball_on_screen(1) <= '0';
+                           game_on(1) <= '0';
+                           hit_counter <= hit_counter - "0000000000000001";
+                           display_hits <= hit_counter;
+                           if hit_counter <= "0000000000000011" THEN
+                           ps_state <= pr_state;
+                           nx_state <= END_GAME;
+                           ELSE
+                           ps_state <= pr_state;
+                           nx_state <= ENTER_GAME;
+                           end if;
+                ELSIF ball_y1 + bsize >= 600 THEN -- if ball meets bottom wall
+                           ball_on_screen(1) <= '0';
+                           game_on(1) <= '0';
+                           ps_state <= pr_state;
+                           nx_state <= ENTER_GAME;       
+                END IF; 
+                
+                 IF (ball_x2 + bsize/2) >= (bat_x - bat_w) AND
+                   (ball_x2 - bsize/2) <= (bat_x + bat_w) AND
+                   (ball_y2 + bsize/2) >= (bat_y - bat_h) AND
+                   (ball_y2 - bsize/2) <= (bat_y + bat_h) THEN
+                           ball_on_screen(2) <= '0';
+                           game_on(2) <= '0';
+                           hit_counter <= hit_counter + "0000000000000001";
+                           display_hits <= hit_counter;
+                           ps_state <= pr_state;
+                           nx_state <= ENTER_GAME;
+                ELSIF ball_y2 + bsize >= 600 THEN -- if ball meets bottom wall
+                           ball_on_screen(2) <= '0';
+                           game_on(2) <= '0';
+                           ps_state <= pr_state;
+                           nx_state <= ENTER_GAME;
+```
+* Despite multiple attempts to rectify the code, they were unsuccessful in resolving the issue.
+* Additionally, they aimed for the game to end whenever the hit counter reached zero. To achieve this, they set the counter to zero outside of the FSM. However, this led to the attempt below, where the counter always displayed zero regardless of the actual score.
+```vhd
+BEGIN
+        ball_speed <= "00000000010";
+        hit_counter <= "0000000000000000";
+        count_tmp <= "0000000000000000";
+        WAIT UNTIL rising_edge(v_sync);
+            pr_state <= nx_state;
+        CASE pr_state IS 
+            WHEN ENTER_GAME => 
+                IF serve = '1' THEN
+                    nx_state <= SERVE_RELEASE;
+                ELSIF (game_on(0) = '1' AND game_on(1) = '1' AND game_on(2) ='1' AND game_on(3) ='1' AND game_on(4) ='1'AND game_on(5) ='1') THEN
+                    ball_on_screen(0) <= '1';
+                    ball_on_screen(1) <= '1';
+                    ball_on_screen(2) <= '1';
+                    ball_on_screen(3) <= '1';
+                    ball_on_screen(4) <= '1';
+                    ball_on_screen(5) <= '1';
+                    ball_y_motion0 <= ball_speed + 3;
+                    ball_y_motion1 <= ball_speed + 1;
+                    ball_y_motion2 <= ball_speed + 3;
+                    ball_y_motion3 <= ball_speed + 1;
+                    ball_y_motion4 <= ball_speed + 3;
+                    ball_y_motion5 <= ball_speed + 1;
+                    nx_state <= START_COLL;
+                ELSIF (game_on(0) = '0' AND ball_on_screen(0) = '0' AND ps_state = START_COLL) THEN
+                    game_on(0) <= '1';
+                    ball_on_screen(0) <= '1';
+                    ball_y_motion0 <= ball_speed + 3;
+                    nx_state <= START_COLL;
+                ELSE nx_state <= ENTER_GAME;
+                END IF;  
+```
 
 #### Sound Effects
 * Although the sound effects played correctly at the beginning of the game, numerous challenges arose in getting the code to produce the appropriate sound effects for the game's ending (whether winning or losing).
