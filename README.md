@@ -470,7 +470,7 @@ END PROCESS;
 ```
 * The majority of modifications, distinct from those in lab 5, primarily involve the routing of input and output variables.
 * ```dac_if.vhd``` was also included from lab 5 without any alterations.
-### Successes and Challenges
+### Successes and Challenges for Sound Effects
 * The team successfully achieved the correct notes for the sound effects to play at the beginning of the game, as demonstrated in the video
 * Although the sound effects played correctly at the beginning of the game, numerous challenges arose in getting the code to produce the appropriate sound effects for the game's ending (whether winning or losing).
  *  Instead, a very delayed humming sound would play, and it prevented the correct sound effect from playing when restarting the game
