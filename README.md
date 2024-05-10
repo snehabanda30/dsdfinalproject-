@@ -316,14 +316,14 @@ square : PROCESS (aud_clk, tmp_clk, notee)
 			END CASE;
 		END IF;
 ```
-* The code:
+* The code Above:
   * Compares the 5-bit input to a 32-entry lookup table associating each bit combination with a note
   * Utilizes calculated values for each note in a clock divider.
   * Divides the input 48.8KHz clock by the corresponding table value.
   * Generates a temporary clock with the desired frequency.
   * Outputs a 16-bit signed value (either 10240 or -10240) based on the state of the new clock signal.
 * The team specifically included only the four mentioned notes. 
-* **tonee** epresents the resulting audio data output.
+* **tone** represents the resulting audio data output.
 * Also ```ClkDiv2.vhd``` was incorporated to halve the 100 MHz system clock to 50 MHz. This was done to align with the lab 5 inspired sections of the code, which specifically required a 50 MHz clock.
 ```vhdl
 BEGIN
