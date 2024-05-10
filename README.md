@@ -781,10 +781,11 @@ BEGIN
 ```
 * However, this approach yielded little progress and did not solve the problem. Due to time constraints, the team ultimately decided to allow the music to play only at the very beginning of the game.
 
-## Important Ports and Signals (Pre)
+## Significant Ports and Signals
+* ```BTNC```, ```BTNL```, ```BTNR```: ```BTNC``` controls the "serve" port, while BTNL and BTNR control the the left and right movement of the bat. 
 * ```ball_on_screen(8 downto 0)```, ```ball_on(8 downto 0)```, ```game_on(8 downto 0)```: controls individual balls' pixels, drawing, and motions
 * ```collision_detected```: boolean signal that toggles "true" when a collision occurs, flag that prevents hit_counter from incrementing more than once after a collision occurs.
-* ```pr_state```,```nx_state```: signals that are assigned states after every clock cycle.
+* ```pr_state```,```nx_state```, ```ps_state```: signals that are assigned states after every clock cycle.
 * ```display_hits```, ```hit_counter```: the port that communicates with leddec regarding the number of points a player has received, corresponding signal that counts hits based on the occurence of collisions between the balls and bat
 
 ## Contributions 
