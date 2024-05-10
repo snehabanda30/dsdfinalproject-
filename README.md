@@ -40,8 +40,8 @@ COLLECT was developed from the lab 6 baseline code. Once the game appears on the
 7. Press down BTNC to begin game
    * Use the BTNL and BTNR to move the bat across the screen
 
+![image](entities.png)
 ## Modifications 
-PLACE PICTURE ENTITY TREE
 
 ### Set of Nine Balls
 * In the original Pong lab, ```ball_on``` and ```game_on``` were signals responsible for the drawing and positioning of one ball in the bat_n_ball component file.
@@ -200,15 +200,19 @@ randomizer: PROCESS IS
   
 ### Ball-Wall Collisions 
 * The group wanted to extend the respawn logic to when the balls went off of the screen as well.
-* To do this they utilized the logic provided in the original Pong lab for when the ball meets the bottom wall.
-    ```vhdl
+* To do this they utilized the logic provided in the original Pong lab for when the ball meets the bottom wall
+* Once the ball reaches the bottom of screen (at 600 pixels), the ball wall will disappear
+  ```vhdl
 	ELSIF ball_y0 + bsize >= 600 THEN -- if ball meets bottom wall
                            ball_on_screen(0) <= '0';
                            game_on(0) <= '0';
                            ps_state <= pr_state;
                            nx_state <= ENTER_GAME; 
    ```
-* This logic dictates that if the sum of the radius and y coordinate of the ball is greater than the screen height, then ball_on_screen and game_on will default two zero, which will set forth the respawn logic to take axtion and bring the state back to ```ENTER_GAME```
+  *   The equation adds the current ball position and the radius of the ball.
+  *   The ball_on_screen signal will be set to zero.
+  *   The game_on(0) signal is set to '0'.
+  **   The state returns to Enter_Game.
  
 ### Corrected Hit_Counter Incrementation
 * The group wanted the signal ```hit_counter``` to increment and decrement upon 
@@ -462,9 +466,9 @@ WHEN END_GAME =>
 * ```dac_if.vhd``` was also included from lab 5 without any alterations.
 * The team successfully achieved the correct notes for the sound effects to play at the beginning of the game, as demonstrated in the video
   
-## Process Summary (Sneha)
+## Process Summary  
+![image](diagram.jpg)
 ### Challenges 
-#### Motion
 #### Respawn
 * Although the team eventually succeeded in getting the balls to respawn correctly, initially, they encountered significant difficulty in achieving this.
 * They made multiple attempts and tried various codes before achieving success.
@@ -560,9 +564,77 @@ WHEN START_COLL =>
 ```
 * After numerous trial and error attempts, they eventually arrived at the correct respawning code. This was achieved by refining the FSM logic, enabling the balls to respawn in different locations successfully.
   
+### Development of FSM Logic
+
+  *  The team faced challenges with the ball respawning after each collision.
+     * The team If/Else statements for the collision logic.The code below demonstrates that  no if/else statement do not allow ball to respawn. Ball movement changes only once. 
+ 
+**INITIAL CODE**
+``` VHDL 
+IF  ball_on_screen(1) = '0' AND game_on = '1'  THEN -- test for new serve
+            game_on <= '1';
+            ball_on_screen(1) <= '1';
+            ball_y_motion1 <= (NOT ball_speed) + 1; 
+            --ball_on_screen(1) <= '1';
+           -- ball_y_motion1 <= (NOT ball_speed) + 1; -- set vspeed to (- ball_speed) pixels
+ELSIF ball_y1 <= bsize THEN -- bounce off top wall
+            ball_y_motion1 <= ball_speed; -- set vspeed to (+ ball_speed) pixels
+ELSIF ball_y1 + bsize >= 600 THEN -- if ball meets bottom wall
+            --ball_y_motion1 <= (NOT ball_speed) + 1; -- set vspeed to (- ball_speed) pixels
+            game_on <= '0'; -- and make ball disappear
+            ball_on_screen(1) <= '0';
+END IF;
+        -- allow for bounce off left or right of screen
+IF ball_x1 + bsize >= 800 THEN -- bounce off right wall
+            ball_x_motion1 <= (NOT ball_speed) + 1; -- set hspeed to (- ball_speed) pixels
+ELSIF ball_x1 <= bsize THEN -- bounce off left wall
+            ball_x_motion1 <= ball_speed; -- set hspeed to (+ ball_speed) pixels
+END IF;
+        -- allow for ball to fall off
+IF (ball_x1 + bsize/2) >= (bat_x - bat_w) AND
+(ball_x1 - bsize/2) <= (bat_x + bat_w) AND
+(ball_y0 + bsize/2) >= (bat_y - bat_h) AND
+(ball_y0 - bsize/2) <= (bat_y + bat_h) THEN
+         ball_on_screen(1) <= '0';
+END IF;
+```
+* In order to combat the issue, the team needed to create multiple temp variables to move the ball regardless of current ball motion.  Once game_on <= '0', the ball will reposition itself to another random location and move the ball.  
+
+**FINAL CODE**
+``` VHDL 
+temp := ('0' & ball_y0) + (ball_y_motion0(10) & ball_y_motion0);
+                        IF game_on(0) = '0' THEN
+                            ball_y0 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                            ball_x0 <= conv_std_logic_vector(conv_integer(start_pos) * 5 mod 700, 11);
+                        ELSIF temp(11) = '1' THEN
+                            ball_y0 <= (OTHERS => '0');
+                        ELSE ball_y0 <= temp(10 DOWNTO 0); -- 9 downto 0
+                        END IF;
+              temp1 := ('0' & ball_y1) + (ball_y_motion1(10) & ball_y_motion1);
+                        IF game_on(1) = '0' THEN
+                            ball_y1 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                            ball_x1 <= conv_std_logic_vector(conv_integer(start_pos) * 6 mod 700, 11);
+                        ELSIF temp1(11) = '1' THEN
+                            ball_y1 <= (OTHERS => '0');
+                        ELSE ball_y1 <= temp1(10 DOWNTO 0); -- 9 downto 0
+                        END IF;
+```
+* With the temp additions, the ball infinitely respawn without considering collisions. Hence, the team decided to no longer use If/Else statements. An FSM was needed for respawn to occur. Initially, the team had four states, ENTER_GAME,SERVE_RELEASE, START_COLLISION and RESPAWN state. However, the respawn state was unnecessary instead new signals for past state and present state were created and used within the conditions to respawn.
+
+**EXAMPLE OF PAST & PRESENT STATES**
+```VHDL
+ELSIF (game_on(0) = '0' AND ball_on_screen(0) = '0' AND ps_state = START_COLL) THEN
+                    game_on(0) <= '1';
+                    ball_on_screen(0) <= '1';
+                    ball_y_motion0 <= ball_speed + 3;
+                    nx_state <= START_COLL;
+                ELSE nx_state <= ENTER_GAME;
+                END IF; 
+ ```
+  
 #### Hit_Counter Incrementation
 * The most significant challenge the team encountered with the hit counter was that every collision was double-counted, whereas the team intended for each collision to count as only one point.
-```vhd
+```vhdl
  IF (ball_x1 + bsize/2) >= (bat_x - bat_w) AND
                    (ball_x1 - bsize/2) <= (bat_x + bat_w) AND
                    (ball_y1 + bsize/2) >= (bat_y - bat_h) AND
