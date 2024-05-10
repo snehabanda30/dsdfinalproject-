@@ -442,7 +442,7 @@ WHEN END_GAME =>
 ![image](diagram.jpg)
 ### Challenges
 ### Compponent Discrepancies
-** The team originally attempted to add multiple components of the ```bat_n_ball``` file in order to create several balls. However, this approach resulted in errors with multiple ports writing to another input port at once. In order to combat this, the team implemented the vector approach detailed in the modifications section. 
+* The team originally attempted to add multiple components of the ```bat_n_ball``` file in order to create several balls. However, this approach resulted in errors with multiple ports writing to another input port at once. In order to combat this, the team implemented the vector approach detailed in the modifications section. 
 #### Respawn
 * Although the team eventually succeeded in getting the balls to respawn correctly, initially, they encountered significant difficulty in achieving this.
 * They made multiple attempts and tried various codes before achieving success.
