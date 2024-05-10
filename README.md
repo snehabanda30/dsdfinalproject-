@@ -15,6 +15,10 @@ In **COLLECT**, player must get five points by collecting green circles and avoi
 
 ![NI Digilent Nexys A7-100T FPGA Trainer Board](NexysA7-obl-600__85101.jpg)
 
+[Pmod I2S](https://digilent.com/reference/pmod/pmodi2s/start?redirect=1)
+
+![Pmod I2S](i2s.png)
+
 ## Video (Sneha)
 
 ## Steps to Run Project (Sneha)
