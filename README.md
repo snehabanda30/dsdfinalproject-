@@ -43,12 +43,10 @@ COLLECT was developed from the lab 6 baseline code. Once the game appears on the
 ## Modifications 
 PLACE PICTURE ENTITY TREE
 
-### Finite State Machine 
-* The group set out to modify the logic of the code so that balls may be captured by the basket (formerly the bat), and respawn at the top of the screen.
-* In order 
-
 ### Set of nine balls
-* Nine balls were initialized with different X coordinates and a Y coordinate set to zero to display the balls at various positions across the top of the screen.
+* In the original Pong lab, ```ball_on``` and ```game_on``` were signals responsible for the drawing and positioning of one ball in the bat_n_ball component file.
+* For the group's purposes, they required several balls to be created, and spawn randomly and independently based on any collision they had. 
+* In order to do this, the group changed ```ball_on``` and ```game_on``` to vectors with lengths of 9 bits, each of those bits corresponding to x and y coordinate signals that the group 
 * A new variable called 'ball_on_screen' was created as a std_logic_vector(8 downto 0) to manage the visibility of the nine balls on the screen.
 * For the balls to move vertically (in the y direction), all ball_x_motion values are set to zero, while ball_y_motion is determined by the specified ball_speed.
 
@@ -101,8 +99,66 @@ IF ball_on_screen(1) = '1' THEN
             END IF;
         END IF;
 ```
+### Finite State Machine 
+* The group set out to modify the logic of the code so that balls may be captured by the basket (formerly the bat), and respawn at the top of the screen.
+* In order to be able to repeatedly verify that a ball needed to be respawned after turning off, the group implemented a finite state machine, which would return to the **ENTER_GAME** state once a collision occured, and check for conditions that allow the ball to respawn.
+* To do this, the group repurposed the ```mball``` process from the Pong lab, transitioning between states after certain occurences.
+	* For example, when BTNC is depressed, serve = '1'. In our, FSM this results in the transition between the states **ENTER_GAME** and **SERVE_RELEASE**.
+   
+     ```vhdl
+	CASE pr_state IS 
+ 		WHEN ENTER_GAME => 
+			IF serve = '1' THEN
+                    		nx_state <= SERVE_RELEASE;	
+     ``` 	
+ 	* Once ```pr_state <= SERVE_RELEASE``` and the button is released, the ```hit_counter``` is initialized, ```game_on <= "111111111"```, and ```nx_state <= ENTER_GAME```
+    ```vhdl
+    	WHEN SERVE_RELEASE =>
+     		IF serve = '0' THEN
+     			hit_counter <= "0000000000000000";
+     			display_hits <= hit_counter;
+     			game_on(0) <= '1';
+     			-- ...
+     			nx_state <= ENTER_GAME;
+    ```
+  	* In **ENTER_GAME**, ```ball_on_screen => "111111111"``` and all the motion vectors are initialized as a result of game_on being completely on. The FSM then transitions to the **START_COLL** state.
+  	* In **START_COLL**, the FSM checks for collisions that occur betwween the ball and the basket or wall. When a collision occurs, the FSM either transitions to **ENTER_GAME** to respawn with ```ps_state <= pr_state```, or **END_GAME** once the hit_counter reaches either an upper bound or a lower bound of zero.
+  	* In **END_GAME**, all logic ceases unless BTNC is depressed, which restarts the FSM at the **ENTER_GAME** state once more
+* In order to transition the next state to the current state, the group implemented a clock cycle function that would allow for the state to transition on the rising edge of every clock cycle.
+  ```vhdl
+	BEGIN
+        ball_speed <= "00000000010";
+        WAIT UNTIL rising_edge(v_sync);
+            pr_state <= nx_state;
+  ``` 
+ 	
 ### Respawn Logic
-* Respawning in Random x-Positions.
+* The main purpose of the implementation of an FSM by the group was to correct their respawn logic. Once the ball ceased motion and the pixels were turned off, the ```mball``` process didn't go back and check the previously stated conditions that allowed for the ball to respawn.
+* The group utilized a seperate set of If/Else statements, and manipulated the temp variables in order to achieve the desired outcome.
+ 	* During the **START_COLL** state, once a collision was detected the ball_on_screen and game_on signals would turn to zero in the positions corresponding to the coordinates of the ball that experienced collision.
+  		* ```game_on(i) <= '0'``` would result in the reset of the x and y positions of the ball via the temp variable, the implementation of which the group left, outside of the FSM.
+    		```vhdl
+			temp := ('0' & ball_y0) + (ball_y_motion0(10) & ball_y_motion0);
+                        IF game_on(0) = '0' THEN
+                            ball_y0 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                            ball_x0 <= conv_std_logic_vector(conv_integer(start_pos) * 5 mod 700, 11);
+                        ELSIF temp(11) = '1' THEN
+                            ball_y0 <= (OTHERS => '0');
+                        ELSE ball_y0 <= temp(10 DOWNTO 0); -- 9 downto 0
+                        END IF;	
+    		``` 
+  		* Because, ```game_on(i) <= '0' ``` ```ball_on_screen(i) <= '0'``` and ```ps_state <= START_COLL```, the FSM finds that condition and toggles the two signals, as well as resets the motion of the ball, before returning to the **START_COLL** state.
+   ```vhdl
+	ELSIF (game_on(0) = '0' AND ball_on_screen(0) = '0' AND ps_state = START_COLL) THEN
+                    game_on(0) <= '1';
+                    ball_on_screen(0) <= '1';
+                    ball_y_motion0 <= ball_speed + 3;
+                    nx_state <= START_COLL;
+        ELSE nx_state <= ENTER_GAME;
+        END IF; 
+   ```
+     	 
+* The group also utilized code from the [Evade Game -- Final Project Work for Digital System Design](https://github.com/Aoli03/DSD-Final-Lab-Project/tree/main?tab=readme-ov-file) in order to set random x positions for the balls before they respawned.
 ```vhdl
 randomizer: PROCESS IS
      VARIABLE rand : INTEGER;        
@@ -111,12 +167,13 @@ randomizer: PROCESS IS
         rand := conv_integer(conv_std_logic_vector(counter, 11) XOR bat_x XOR pixel_row XOR pixel_col) mod 700 ;
         start_pos <= conv_std_logic_vector(rand,11);
 ```
-* The group utilized code from the [Evade Game -- Final Project Work for Digital System Design](https://github.com/Aoli03/DSD-Final-Lab-Project/tree/main?tab=readme-ov-file) in order to set random x positions for the balls before they respawned.
-* Assigned on the falling edge of every clock cycle.
+* These positions were assigned on every clock cycle's falling edge, before the state transitioned from ```pr_state <= nx_state```.
 * Mod division 700 prevents the balls from spawning off screen.
 
-### Motion (Sneha)
-
+### Motion
+* The motion logic utilized from the group was once again from the Pong lab, however it was manipulated to better suit the purposed of the *Collect* gameplay.
+ * For example, x-direction motion was left out entirely, and only y-direction code was utilized in the ```mball``` process.
+ * While the game_on signal was originally utilized in the Pong lab for resetting the position of the ball, the group also utilized this signal to reset the motion of the ball at the point of respawning.
 
 ### Ball-Basket Collisions
 * The original code featured logic that would allow for the ball to bounce off of the bat. When this occured, the ball would continue it's motion in the opposite direction.
@@ -130,7 +187,7 @@ randomizer: PROCESS IS
         END IF;
   ```
 * This logic states that if the total distance between the center and edge of the ball is greater than that of the distance between the x position and width and y position and height of the bat, then the ball_y_motion will switch to the opposite direction (negative ball speed). 
-* The group repurposed this If/Else Statement, but changed the logic so that they could end the ball's course accross the screen and restart it elsewhere.
+* The group repurposed this If/Else Statement, but changed the logic so that they could end the ball's course across the screen and restart it elsewhere.
   
   ```vhdl
 	WHEN START_COLL =>
