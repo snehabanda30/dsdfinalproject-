@@ -147,12 +147,73 @@ IF nx_state = ENTER_GAME THEN
 ### Score (Naz)
 
 # Process Summary (Sneha)
+*CHALLENGES 
+*  The team faced challenges with the ball respawning after each collision.
+     * The team If/Else statements for the collision logic.The code below demonstrates that  no if/else statement do not allow ball to respawn. Ball movement changes only once. 
+ 
+**INITIAL CODE**
+``` VHDL 
+IF  ball_on_screen(1) = '0' AND game_on = '1'  THEN -- test for new serve
+            game_on <= '1';
+            ball_on_screen(1) <= '1';
+            ball_y_motion1 <= (NOT ball_speed) + 1; 
+            --ball_on_screen(1) <= '1';
+           -- ball_y_motion1 <= (NOT ball_speed) + 1; -- set vspeed to (- ball_speed) pixels
+ELSIF ball_y1 <= bsize THEN -- bounce off top wall
+            ball_y_motion1 <= ball_speed; -- set vspeed to (+ ball_speed) pixels
+ELSIF ball_y1 + bsize >= 600 THEN -- if ball meets bottom wall
+            --ball_y_motion1 <= (NOT ball_speed) + 1; -- set vspeed to (- ball_speed) pixels
+            game_on <= '0'; -- and make ball disappear
+            ball_on_screen(1) <= '0';
+END IF;
+        -- allow for bounce off left or right of screen
+IF ball_x1 + bsize >= 800 THEN -- bounce off right wall
+            ball_x_motion1 <= (NOT ball_speed) + 1; -- set hspeed to (- ball_speed) pixels
+ELSIF ball_x1 <= bsize THEN -- bounce off left wall
+            ball_x_motion1 <= ball_speed; -- set hspeed to (+ ball_speed) pixels
+END IF;
+        -- allow for ball to fall off
+IF (ball_x1 + bsize/2) >= (bat_x - bat_w) AND
+(ball_x1 - bsize/2) <= (bat_x + bat_w) AND
+(ball_y0 + bsize/2) >= (bat_y - bat_h) AND
+(ball_y0 - bsize/2) <= (bat_y + bat_h) THEN
+         ball_on_screen(1) <= '0';
+END IF;
+```
+* In order to combat the issue, the team needed to create multiple temp variables to move the ball regardless of current ball motion.  Once game_on <= '0', the ball will reposition itself to another random location and move the ball.  
 
-# Important Port Maps (Pre)
-### Description of inputs from and outputs to the Nexys board from the Vivado project (10 points of the Submission category)
-  * As part of this category, if using starter code of some kind (discussed below), you should add at least one input and at least one output appropriate to your project to demonstrate your understanding of modifying the ports of your various architectures and components in VHDL as well as the separate .xdc constraints file.
+**FINAL CODE**
+``` VHDL 
+temp := ('0' & ball_y0) + (ball_y_motion0(10) & ball_y_motion0);
+                        IF game_on(0) = '0' THEN
+                            ball_y0 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                            ball_x0 <= conv_std_logic_vector(conv_integer(start_pos) * 5 mod 700, 11);
+                        ELSIF temp(11) = '1' THEN
+                            ball_y0 <= (OTHERS => '0');
+                        ELSE ball_y0 <= temp(10 DOWNTO 0); -- 9 downto 0
+                        END IF;
+              temp1 := ('0' & ball_y1) + (ball_y_motion1(10) & ball_y_motion1);
+                        IF game_on(1) = '0' THEN
+                            ball_y1 <= CONV_STD_LOGIC_VECTOR(0, 11);
+                            ball_x1 <= conv_std_logic_vector(conv_integer(start_pos) * 6 mod 700, 11);
+                        ELSIF temp1(11) = '1' THEN
+                            ball_y1 <= (OTHERS => '0');
+                        ELSE ball_y1 <= temp1(10 DOWNTO 0); -- 9 downto 0
+                        END IF;
+```
+* With the temp additions, the ball infinitely respawn without considering collisions. Hence, the team decided to no longer use If/Else statements. An FSM was needed for respawn to occur. Initially, the team had four states, ENTER_GAME,SERVE_RELEASE, START_COLLISION and RESPAWN state. However, the respawn state was unnecessary instead new signals for past state and present state were created and used within the conditions to respawn.
 
-# Contributions 
+**EXAMPLE OF PAST & PRESENT STATES**
+```VHDL
+ELSIF (game_on(0) = '0' AND ball_on_screen(0) = '0' AND ps_state = START_COLL) THEN
+                    game_on(0) <= '1';
+                    ball_on_screen(0) <= '1';
+                    ball_y_motion0 <= ball_speed + 3;
+                    nx_state <= START_COLL;
+                ELSE nx_state <= ENTER_GAME;
+                END IF; 
+ ```
+
 
 
 
