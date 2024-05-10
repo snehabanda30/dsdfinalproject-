@@ -25,6 +25,11 @@ COLLECT was developed from the lab 6 baseline code. Once the game appears on the
 ![image](screen.gif) 
 
 ![image](winningandlosingonboard.gif)
+
+![image](IMG_6835.gif)
+
+[Audio for Music](https://www.youtube.com/shorts/x4X-i4yPIbg)
+
 ## Steps to Run Project (Sneha)
 1. Download files: clk_wiz_0, clk_wiz_0_clk_wiz, vga_sync, bat_n_ball, leddec16,pong and opng_2.xdc  
 2. Connect the monitor's HDMI cable to VGA. Also, connect the VGA to Nexys A7-100T board by powering with a USB cable and connecting aux cord to board.  
